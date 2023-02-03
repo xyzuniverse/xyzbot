@@ -1,0 +1,9 @@
+# Node modules
+node_modules
+
+# Sessions
+sessions
+
+# Database
+.database.json.tmp
+database.json
