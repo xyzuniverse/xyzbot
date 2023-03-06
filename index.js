@@ -19,44 +19,12 @@ const logger = require("pino")({
 const { Boom } = require('@hapi/boom')
 const fs = require('fs')
 const store_system = require("./lib/store.js")
-const { Low, JSONFile } = require('./lib/lowdb')
 const path = require("path")
 const _ = require('lodash')
 const yargs = require("yargs/yargs")
 
 // Prevent to crash if error occured
 process.on('uncaughtException', console.error)
-
-// Database
-global.db = new Low(
-    new JSONFile(`./database.json`)
-)
-
-global.loadDatabase = async function loadDatabase() {
-  if (global.db.READ) return new Promise((resolve) => setInterval(function () { (!global.db.READ ? (clearInterval(this), resolve(global.db.data == null ? global.loadDatabase() : global.db.data)) : null) }, 1 * 1000))
-  if (global.db.data !== null) return
-  global.db.READ = true
-  await global.db.read()
-  global.db.READ = false
-  global.db.data = {
-    users: {},
-    chats: {},
-    stats: {},
-    msgs: {},
-    sticker: {},
-    settings: {},
-    list: {},
-    ...(global.db.data || {})
-  }
-  global.db.chain = _.chain(global.db.data)
-}
-global.loadDatabase()
-
-if (global.db) setInterval(async () => {
-    if (global.db.data) await global.db.write()
-    if (!opts['tmp'] && (global.support || {}).find) (tmp = [os.tmpdir(), 'tmp'], tmp.forEach(filename => cp.spawn('find', [filename, '-amin', '3', '-type', 'f', '-delete'])))
-    process.on("exit", async () => await global.db.write())
-  }, 30 * 1000)
 
 // Plugin manager
 let pluginFolder = path.join(__dirname, 'plugins')
@@ -107,6 +75,14 @@ global.prefix = new RegExp('^[' + (opts['prefix'] || '‎xzXZ/i!#$%+£¢€¥^°
  * @returns
  */
 const initConnection = async () => {
+    // Database loader
+    global._db = new(require('./lib/localdb'))("database")
+    global.db = {users:[], chats:[], groups:[], statistic:{}, sticker:{}, setting:{}, ...(await _db.fetch() ||{})}
+    await _db.save(global.db)
+    setInterval(async () => {
+      if (global.db) await _db.save(global.db)
+    }, 30_000)
+
     const { state, saveCreds } = await store_system.useMultiFileAuthState("sessions")
     const { version, isLatest } = await fetchLatestBaileysVersion()
     logger.info(`connecting using version ${version.join(`.`)}, latest: ${isLatest}`)
