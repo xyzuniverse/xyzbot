@@ -4,8 +4,8 @@
   "description": "WhatsApp Bot",
   "main": "index.js",
   "dependencies": {
-    "@adiwajshing/baileys": "^5.0.0",
     "@adiwajshing/keyed-db": "^0.2.4",
+    "baileys": "^6.0.7",
     "jsdom": "^18.1.1",
     "lodash": "^4.17.21",
     "lowdb": "^2.1.0",

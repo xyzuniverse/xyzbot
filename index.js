@@ -4,7 +4,7 @@ const {
     DisconnectReason,
     fetchLatestBaileysVersion,
     useMultiFileAuthState,
-} = require('@adiwajshing/baileys')
+} = require('baileys')
 
 const logger = require("pino")({
     transport: {
