@@ -1,0 +1,25 @@
+{
+  "name": "xyzbot",
+  "version": "1.0.0",
+  "description": "a mnmlist WhatsApp Bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xyzuniverse/xyzbot.git"
+  },
+  "author": "Ido",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xyzuniverse/xyzbot/issues"
+  },
+  "homepage": "https://github.com/xyzuniverse/xyzbot#readme",
+  "dependencies": {
+    "@adiwajshing/keyed-db": "^0.2.4",
+    "baileys": "^6.0.7",
+    "pino-pretty": "^10.0.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
