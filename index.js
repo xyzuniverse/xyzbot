@@ -42,7 +42,7 @@ let files = await fs.readdirSync(path.join(pluginFolder, name))
         }
     }
 })
-console.log(Object.keys(global.plugins))
+logger.info("All plugins has been loaded.")
 
 global.reload = async (_event, filename) => {
     if (pluginFile(filename)) {
@@ -80,9 +80,7 @@ global.prefix = new RegExp('^[' + (('‎xzXZ/i!#$%+£¢€¥^°=¶∆×÷π√�
  * Init the WA Web connection
  * @returns
  */
-
 const initConnection = async () => {
-
     const { state, saveCreds } = await useMultiFileAuthState("sessions")
     const { version, isLatest } = await fetchLatestBaileysVersion()
     logger.info(`connecting using version ${version.join(`.`)}, latest: ${isLatest}`)
@@ -120,6 +118,9 @@ const initConnection = async () => {
 
     // Chats message event
     conn.ev.on("messages.upsert", require('./handler').handler.bind(conn))
+
+    // Connection helper
+    require('./lib/socketHelper').socketHelper(conn);
 
     return conn
 }

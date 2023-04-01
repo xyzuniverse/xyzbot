@@ -1,5 +1,5 @@
 let handler = async(m, { conn, text }) => {
-    conn.sendMessage(m.chat, { text: 'pong' }, { quoted: m } )
+    conn.sendReact(m.chat, "🏓", m.key)
 }
 
 handler.command = /^(ping)$/i
