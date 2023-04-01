@@ -81,6 +81,10 @@ global.prefix = new RegExp('^[' + (('‎xzXZ/i!#$%+£¢€¥^°=¶∆×÷π√�
  * @returns
  */
 const initConnection = async () => {
+    // Database
+    global.props = new (require('./lib/localdb'))(global.database)
+    global.db = { users:[], chats:[], ...(await props.fetch() ||{}) }
+
     const { state, saveCreds } = await useMultiFileAuthState("sessions")
     const { version, isLatest } = await fetchLatestBaileysVersion()
     logger.info(`connecting using version ${version.join(`.`)}, latest: ${isLatest}`)
@@ -124,5 +128,10 @@ const initConnection = async () => {
 
     return conn
 }
+
+// Save database every minute
+setInterval(async () => {
+    if (global.db) await props.save(global.db)
+}, 60 * 1000)
 
 initConnection().catch(e => console.log(e))

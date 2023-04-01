@@ -3,3 +3,7 @@ sessions
 
 # node modules
 node_modules
+
+# Databases
+database.bak
+database.json

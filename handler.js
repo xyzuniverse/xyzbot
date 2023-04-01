@@ -5,6 +5,9 @@ module.exports = {
             let m = require('./lib/messageHelper').messageHelper(conn, msgEvent?.messages[0])
             console.log(JSON.stringify(m, null, 2))
 
+            // Database
+            require('./lib/database')(m)
+            
             // Plugin manager, and executor
             let usedPrefix;
             for (let name in global.plugins) {
