@@ -39,6 +39,7 @@ exports.messageHelper = (conn, m) => {
         }
     }
     return {
+        key: m.key,
         id,
         sender,
         chat,

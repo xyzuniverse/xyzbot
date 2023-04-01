@@ -19,7 +19,9 @@
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
     "baileys": "^6.0.7",
+    "path": "^0.12.7",
     "pino-pretty": "^10.0.0",
-    "qrcode-terminal": "^0.12.0"
+    "qrcode-terminal": "^0.12.0",
+    "syntax-error": "^1.4.0"
   }
 }
