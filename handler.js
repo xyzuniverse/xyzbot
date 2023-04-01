@@ -2,7 +2,7 @@ module.exports = {
     async handler(msgEvent) {
         // The message handler
         try {
-            let m = require('./socketHelper').messageHelper(conn, msgEvent?.messages[0])
+            let m = require('./lib/socketHelper').messageHelper(conn, msgEvent?.messages[0])
             console.log(JSON.stringify(m, null, 2))
 
             // Plugin manager, and executor
