@@ -1,3 +1,4 @@
+var config = require('./config')
 module.exports = {
     async handler(msgEvent) {
         // The message handler
@@ -7,6 +8,10 @@ module.exports = {
             // Database
             require('./lib/database')(m)
             
+            // Plugin midman (prevent users to running the plugins)
+            let isROwner = [this.user.jid, ...config.owner.map(([number]) => number)].map(v => v?.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)
+            let isOwner = isROwner || m.fromMe
+
             // Plugin manager, and executor
             let usedPrefix;
             for (let name in global.plugins) {
@@ -34,6 +39,7 @@ module.exports = {
                 let _args = noPrefix.trim().split` `.slice(1)
                 let text = _args.join` `
                 command = (command || '').toLowerCase()
+                let fail = plugin.fail || global.dfail
                 let isAccept = plugin.command instanceof RegExp ? // RegExp Mode?
                     plugin.command.test(command) :
                     Array.isArray(plugin.command) ? // Array?
@@ -47,6 +53,21 @@ module.exports = {
 
                 if (!isAccept) continue
                 m.plugin = name
+
+                // Throw the message if didn't meet the required roles.
+                if (plugin.rowner && plugin.owner && !(isROwner || isOwner)) { // Both Owner
+                    fail('owner', m, this)
+                    continue
+                }
+                if (plugin.rowner && !isROwner) { // Real Owner
+                    fail('rowner', m, this)
+                    continue
+                }
+                if (plugin.owner && !isOwner) { // Number Owner
+                    fail('owner', m, this)
+                    continue
+                }
+                
                 m.isCommand = true
                 let extra = {
                     match,
@@ -57,6 +78,8 @@ module.exports = {
                     command,
                     text,
                     conn: this,
+                    isROwner,
+                    isOwner
                 }
                 try {
                     await plugin.call(this, m, extra)
@@ -74,5 +97,12 @@ module.exports = {
         } catch (e) {
             console.log("HandlerError", e)
         }
-    }
+    },
+}
+global.dfail = async (type, m) => {
+    let msg = {
+        rowner: 'Sorry, this command can only executed by the real owner.',
+        owner: 'Sorry, this command can only executed by the owners.',
+    }[type]
+    if (msg) return conn.reply(m.chat, msg, m)
 }
