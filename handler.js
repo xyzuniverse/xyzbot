@@ -2,13 +2,11 @@ var config = require("./config");
 module.exports = {
   async handler(msgEvent) {
     // The message handler
+    let m = require("./lib/messageHelper").messageHelper(
+      conn,
+      msgEvent?.messages[0]
+    );
     try {
-      let m = require("./lib/messageHelper").messageHelper(
-        conn,
-        msgEvent?.messages[0]
-      );
-      console.log(JSON.stringify(msgEvent, null, 2));
-
       // Database
       require("./lib/database")(m);
 
@@ -17,6 +15,7 @@ module.exports = {
         .map((v) => v?.replace(/[^0-9]/g, "") + "@s.whatsapp.net")
         .includes(m.sender);
       let isOwner = isROwner || m.fromMe;
+      if (m.isBaileys) return; // Prevent bot to loop re-sent messages if prefix triggered by the bot
 
       // Plugin manager, and executor
       let usedPrefix;
@@ -110,14 +109,9 @@ module.exports = {
           }
         }
       }
+    } finally {
       // Simplified printed chat
-      try {
-        require("./lib/print")(this, m);
-      } catch (e) {
-        console.log("PrintError:", e);
-      }
-    } catch (e) {
-      console.log("HandlerError", e);
+      require("./lib/print")(this, m).catch((e) => console.log(e));
     }
   },
 };
