@@ -4,6 +4,7 @@ const {
   DisconnectReason,
   fetchLatestBaileysVersion,
   useMultiFileAuthState,
+  makeInMemoryStore,
 } = require("baileys");
 
 const logger = require("pino")({
@@ -117,10 +118,27 @@ const initConnection = async () => {
     auth: state,
     logger: logger,
     version,
+    getMessage: async (key) => {
+      if (store) {
+        const msg = await store.loadMessage(key.remoteJid, key.id);
+        return msg.message || undefined;
+      }
+      return {
+        conversation: "hello",
+      };
+    },
   });
 
   // Add logger into socket
   conn.logger = logger;
+
+  // Add message store into connection
+  var storeChats = makeInMemoryStore({
+    logger: logger,
+  });
+
+  storeChats.bind(conn.ev);
+  conn.msgStore = storeChats;
 
   // Connection update event
   conn.ev.on("connection.update", async (update) => {
@@ -149,6 +167,18 @@ const initConnection = async () => {
 
   // Connection helper
   require("./lib/socketHelper").socketHelper(conn);
+
+  // Contacts update event
+  conn.ev.on("contacts.update", (update) => {
+    for (let contact of update) {
+      let id = conn.decodeJid(contact.id);
+      if (storeChats && storeChats.contacts)
+        storeChats.contacts[id] = {
+          id,
+          name: contact.notify,
+        };
+    }
+  });
 
   return conn;
 };
