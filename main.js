@@ -119,8 +119,8 @@ const initConnection = async () => {
     logger: logger,
     version,
     getMessage: async (key) => {
-      if (store) {
-        const msg = await store.loadMessage(key.remoteJid, key.id);
+      if (storeChats) {
+        const msg = await storeChats.loadMessage(key.remoteJid, key.id);
         return msg.message || undefined;
       }
       return {
@@ -133,12 +133,11 @@ const initConnection = async () => {
   conn.logger = logger;
 
   // Add message store into connection
-  var storeChats = makeInMemoryStore({
+  global.storeChats = makeInMemoryStore({
     logger: logger,
   });
 
   storeChats.bind(conn.ev);
-  conn.msgStore = storeChats;
 
   // Connection update event
   conn.ev.on("connection.update", async (update) => {
