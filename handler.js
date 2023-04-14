@@ -1,6 +1,7 @@
 var config = require("./config");
 module.exports = {
   async handler(msgEvent) {
+    if (!msgEvent?.messages[0].key || !msgEvent?.messages[0].message) return;
     // The message handler
     let m = require("./lib/messageHelper").messageHelper(
       conn,
