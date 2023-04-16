@@ -116,7 +116,7 @@ const initConnection = async () => {
   global.conn = initWASocket({
     printQRInTerminal: true,
     auth: state,
-    logger: logger,
+    logger: require("pino")({ level: "silent" }),
     version,
     getMessage: async (key) => {
       if (storeChats) {
@@ -142,6 +142,8 @@ const initConnection = async () => {
   // Connection update event
   conn.ev.on("connection.update", async (update) => {
     var { connection, lastDisconnect } = update;
+    if (connection === "open") logger.info("Opened and connected to WA Web");
+    if (connection === "connecting") logger.info("Connecting to WA Web...") ;
     if (connection === "close") {
       logger.info("conection lost, reconnecting for a few seconds...");
       let reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
