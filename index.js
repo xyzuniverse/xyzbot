@@ -15,7 +15,7 @@ async function ClientConnect() {
     const client = new Client({
         authStrategy: new LocalAuth(),
         puppeteer: {
-            args: ["--no-sandbox"]
+            args: ["--no-sandbox", "--disable-gpu"]
         }
     });
 
