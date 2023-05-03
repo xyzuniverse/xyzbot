@@ -1,0 +1,5 @@
+# Auth session
+.wwebjs_auth
+
+# Node modules
+node_modules
