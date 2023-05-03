@@ -19,20 +19,23 @@ async function ClientConnect() {
         }
     });
 
+
+    // QR event
     client.on('qr', qr => {
         QRCode.generate(qr, { small: true });
         logger.info("Scan QR code to continue.");
     });
 
+    // Tell the user if client is ready
     client.on('ready', () => {
         logger.info("Opened connection to WA Web")
         logger.info("Client bot is ready!");
     });
 
-    client.on('message', (messages) => {
-        console.log(JSON.stringify(messages, null, 2));
-    });
+    // Message event
+    client.on('message', messages => require('./handler').handler(client, messages));
 
+    // Initialize the client
     client.initialize();
     logger.info("Connecting to WA Web")
 
