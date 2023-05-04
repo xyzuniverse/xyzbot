@@ -1,6 +1,6 @@
 let handler = async(messages, { client, text }) => {
-    client.react("🏓")
-    client.reply("Pong! Our bot is alive!")
+    messages.react("🏓")
+    messages.reply("Pong! Our bot is alive!")
 }
 
 handler.command = /^(ping)$/i
