@@ -4,12 +4,12 @@ module.exports = {
         if (!messages) return;
         try {
             // Plugin midman (prevent users to running the plugins)
-            let isROwner = [this.info.me.user, ...global.owner.map(([number]) => number)].map((v) => v?.replace(/[^0-9]/g, "") ).includes(messages.author.split("@")[0]);
+            let isGroup = messages.from.endsWith("@g.us");
+            let isROwner = [this.info.me.user, ...global.owner.map(([number]) => number)].map((v) => v?.replace(/[^0-9]/g, "") ).includes((isGroup ? messages.author : messages.from).split("@")[0]);
             let isOwner = isROwner || messages.fromMe;
             let chats = await messages.getChat();
             let users = await messages.getContact();
 
-            let isGroup = messages.from.endsWith("@g.us");
             let groupMetadata = isGroup ? chats.groupMetadata : {};
             let participants = isGroup ? groupMetadata.participants : [];
 
