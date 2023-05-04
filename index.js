@@ -19,6 +19,10 @@ async function ClientConnect() {
         }
     });
 
+    // Webloading event
+    client.on('loading_screen', (percent) => {
+        logger.info(`Connecting, loading web... Status: ${percent}%`);
+    });
 
     // QR event
     client.on('qr', qr => {
