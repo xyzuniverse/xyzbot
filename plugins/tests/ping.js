@@ -1,4 +1,4 @@
-let handler = async(client, { messages, text }) => {
+let handler = async(messages, { client, text }) => {
     client.react("🏓")
     client.reply("Pong! Our bot is alive!")
 }
