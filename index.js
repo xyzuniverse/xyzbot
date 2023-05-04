@@ -1,5 +1,8 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const QRCode = require('qrcode-terminal');
+const fs = require('fs');
+const path = require('path');
+const syntaxerror = require('syntax-error');
 const logger = require('pino')({
     transport: {
         target: "pino-pretty",
@@ -11,8 +14,73 @@ const logger = require('pino')({
     }
 }).child({ creator: "xyzuniverse" });
 
+// Plugin loader
+const pluginFolder = path.join(__dirname, "plugins");
+const pluginFilter = fs
+  .readdirSync(pluginFolder, { withFileTypes: true })
+  .filter((v) => v.isDirectory());
+const pluginFile = (filename) => /\.js$/.test(filename);
+
+pluginFilter.map(async ({ name }) => {
+  global.plugins = {};
+  let files = await fs.readdirSync(path.join(pluginFolder, name));
+  for (let filename of files) {
+    try {
+      global.plugins[filename] = require(path.join(
+        pluginFolder,
+        name,
+        filename
+      ));
+      fs.watch(pluginFolder + "/" + name, global.reload);
+    } catch (e) {
+      logger.error(e);
+      delete global.plugins[filename];
+    }
+  }
+});
+logger.info("All plugins has been loaded.");
+
+global.reload = async (_event, filename) => {
+  if (pluginFile(filename)) {
+    let subdirs = await fs.readdirSync(pluginFolder);
+    subdirs.forEach((files) => {
+      let dir = path.join(pluginFolder, files, filename);
+      if (fs.existsSync(dir)) {
+        if (dir in require.cache) {
+          delete require.cache[dir];
+          if (fs.existsSync(dir))
+            logger.info(`re - require plugin '${filename}'`);
+          else {
+            logger.warn(`deleted plugin '${filename}'`);
+            return delete global.plugins[filename];
+          }
+        } else logger.info(`requiring new plugin '${filename}'`);
+        let err = syntaxerror(fs.readFileSync(dir), filename);
+        if (err)
+          logger.error(`syntax error while loading '${filename}'\n${err}`);
+        else
+          try {
+            global.plugins[filename] = require(dir);
+          } catch (e) {
+            logger.error(e);
+          } finally {
+            global.plugins = Object.fromEntries(
+              Object.entries(global.plugins).sort(([a], [b]) =>
+                a.localeCompare(b)
+              )
+            );
+          }
+      }
+    });
+  }
+};
+Object.freeze(global.reload);
+
+// Bot prefix
+global.prefix = new RegExp("^[" + "‎xzXZ/i!#$%+£¢€¥^°=¶∆×÷π√✓©®:;?&.\\-".replace(/[|\\{}()[\]^$+*?.\-\^]/g, "\\$&") + "]");
+
 async function ClientConnect() {
-    const client = new Client({
+    global.client = new Client({
         authStrategy: new LocalAuth(),
         puppeteer: {
             args: ["--no-sandbox", "--disable-gpu"]
@@ -37,7 +105,7 @@ async function ClientConnect() {
     });
 
     // Message event
-    client.on('message', messages => require('./handler').handler(client, messages));
+    client.on('message', require('./handler').handler.bind(client));
 
     // Initialize the client
     client.initialize();
