@@ -14,6 +14,9 @@ const logger = require('pino')({
     }
 }).child({ creator: "xyzuniverse" });
 
+// Prevent to crash if error occured
+process.on("uncaughtException", console.error);
+
 // Plugin loader
 const pluginFolder = path.join(__dirname, "plugins");
 const pluginFilter = fs
