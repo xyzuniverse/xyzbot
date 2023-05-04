@@ -1,10 +1,10 @@
-var config = require('./config.js');
+require('./config.js');
 module.exports = {
     async handler(messages) {
         if (!messages) return;
         try {
             // Plugin midman (prevent users to running the plugins)
-            let isROwner = [this.info.me.user, ...config.owner.map(([number]) => number)].map((v) => v?.replace(/[^0-9]/g, "") ).includes(messages.author.split("@")[0]);
+            let isROwner = [this.info.me.user, ...global.owner.map(([number]) => number)].map((v) => v?.replace(/[^0-9]/g, "") ).includes(messages.author.split("@")[0]);
             let isOwner = isROwner || messages.fromMe;
             let chats = await messages.getChat();
             let users = await messages.getContact();
