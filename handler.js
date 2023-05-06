@@ -1,14 +1,29 @@
 require('./config.js');
+var isNumber = x => typeof x === 'number' && !isNaN(x);
 module.exports = {
     async handler(messages) {
         if (!messages) return;
+        let chats = await messages.getChat();
+        let users = await messages.getContact();
         try {
+
+            // Database
+            try {
+                let user = global.db.data.users[messages.author || messages.from]
+                if (typeof user !== 'object') global.db.data.users[messages.author || messages.from] = {}
+                if (user) {
+                    if (!('name' in user)) user.name = users.pushname
+                } else global.db.data.users[messages.author || messages.from] = {
+                    name: users.pushname
+                }
+            } catch (e) {
+                console.log("DatabaseError:", e)
+            }
+
             // Plugin midman (prevent users to running the plugins)
             let isGroup = messages.from.endsWith("@g.us");
             let isROwner = [this.info.me.user, ...global.owner.map(([number]) => number)].map((v) => v?.replace(/[^0-9]/g, "") ).includes((isGroup ? messages.author : messages.from).split("@")[0]);
             let isOwner = isROwner || messages.fromMe;
-            let chats = await messages.getChat();
-            let users = await messages.getContact();
 
             let groupMetadata = isGroup ? chats.groupMetadata : {};
             let participants = isGroup ? groupMetadata.participants : [];

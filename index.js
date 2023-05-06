@@ -3,6 +3,7 @@ const QRCode = require('qrcode-terminal');
 const fs = require('fs');
 const path = require('path');
 const syntaxerror = require('syntax-error');
+const _ = require('lodash');
 const logger = require('pino')({
     transport: {
         target: "pino-pretty",
@@ -82,6 +83,18 @@ Object.freeze(global.reload);
 // Bot prefix
 global.prefix = new RegExp("^[" + "‎xzXZ/i!#$%+£¢€¥^°=¶∆×÷π√✓©®:;?&.\\-".replace(/[|\\{}()[\]^$+*?.\-\^]/g, "\\$&") + "]");
 
+// Database
+var low
+try {
+  low = require('lowdb');
+} catch {
+  low = require('./lib/lowdb');
+}
+const { Low, JSONFile } = low
+global.db = new Low(
+  new JSONFile('database.json')
+)
+
 async function ClientConnect() {
     global.client = new Client({
         authStrategy: new LocalAuth(),
@@ -102,7 +115,8 @@ async function ClientConnect() {
     });
 
     // Tell the user if client is ready
-    client.on('ready', () => {
+    client.on('ready', async () => {
+        if (global.db.data == null) await loadDatabase();
         logger.info("Opened connection to WA Web")
         logger.info("Client bot is ready!");
     });
@@ -115,7 +129,29 @@ async function ClientConnect() {
     logger.info("Connecting to WA Web")
 
     return client;
+
 }
+
+// Load database if database didn't load properly
+loadDatabase()
+async function loadDatabase() {
+  await global.db.read()
+  global.db.data = {
+    users: {},
+    chats: {},
+    stats: {},
+    msgs: {},
+    sticker: {},
+    settings: {},
+    ...(global.db.data || {})
+  }
+  global.db.chain = _.chain(global.db.data)
+}
+
+// Save database every minute
+setInterval(async () =>{
+  if (global.db) await global.db.write();
+}, 30 * 1000)
 
 ClientConnect()
 .catch(e => console.error(e))
