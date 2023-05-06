@@ -3,6 +3,11 @@ global.owner = [
     ["628123456789", "name", true],
 ]
 
+global.sticker = {
+  packname: "xyzbot\'s stickers.",
+  author: "xyzbot - based on wwjs."
+}
+
 let file = require.resolve(__filename);
 let fs = require('fs');
 let chalk = require('chalk');
