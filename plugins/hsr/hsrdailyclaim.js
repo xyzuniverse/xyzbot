@@ -20,8 +20,10 @@ let handler = async(messages, { client, text }) => {
     } else {
         messages.react("⚠️");
         return messages.reply("Contacting hoyolab API failed, please try again later.")
-    }
+    }s
 }
 
+handler.help = ['hsrdailyclaim']
+handler.tags = ['hsr']
 handler.command = /^(hsrdailyclaim)$/i
 module.exports = handler;

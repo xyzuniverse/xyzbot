@@ -115,7 +115,8 @@ module.exports = {
                     command,
                     text,
                     client: this,
-                    messages
+                    messages,
+                    users
                 };
                 try {
                     await plugin.call(this, messages, extra);

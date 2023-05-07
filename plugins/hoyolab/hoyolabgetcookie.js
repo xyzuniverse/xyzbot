@@ -9,6 +9,8 @@ let handler = async(messages, { client, text }) => {
     messages.reply("Cookie token telah disimpan di database, pastikan digunakan dengan bijak!")
 }
 
+handler.help = ['hoyolabgetcookie (cookie token)']
+handler.tags = ['hoyolab']
 handler.private = true
 handler.command = /^(hoyolabgetcookie)$/i
 module.exports = handler;

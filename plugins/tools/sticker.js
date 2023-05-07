@@ -16,5 +16,7 @@ let handler = async (messages, { client, text, command }) => {
     }
 }
 
-handler.command = /^s(tic?ker)?(gif)?|(wm)$/i
+handler.help = ['stiker (caption|reply media)', 'stikergif (caption|reply media)']
+handler.tags = ['tools']
+handler.command = /^s(tic?ker)?(gif)?$/i
 module.exports = handler

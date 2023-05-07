@@ -15,5 +15,7 @@ let handler = async(messages, { client, text }) => {
     }
 }
 
+handler.help = ['hsrdailylastclaim']
+handler.tags = ['hsr']
 handler.command = /^(hsrdailylastclaim)$/i
 module.exports = handler;

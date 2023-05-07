@@ -1,14 +1,14 @@
 {
   "name": "xyzbot-wwjs",
   "version": "1.0.0",
-  "description": "",
+  "description": "mnmlist whatsapp bot based on whatsapp-web.js",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "xyzuniverse",
   "license": "ISC",
   "dependencies": {
     "awesome-phonenumber": "^5.6.0",

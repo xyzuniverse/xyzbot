@@ -23,5 +23,7 @@ let handler = async(messages, { client, text }) => {
     }
 }
 
+handler.help = ['gidailyclaim']
+handler.tags = ['genshin']
 handler.command = /^(gidailyclaim)$/i
 module.exports = handler;
