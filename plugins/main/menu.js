@@ -27,7 +27,7 @@ const defaultMenu = {
 ${'```%npmdesc```'}
 `,
 }
-let handler = async (messages, { client, usedPrefix: _p, users }) => {
+let handler = async (msg, { client, usedPrefix: _p, users }) => {
   try {
     let package = JSON.parse(await fs.promises.readFile(path.join(__dirname, '../../package.json')).catch(_ => '{}'))
     let name = users.pushname
@@ -106,9 +106,9 @@ let handler = async (messages, { client, usedPrefix: _p, users }) => {
       readmore: readMore
     }
     text = text.replace(new RegExp(`%(${Object.keys(replace).sort((a, b) => b.length - a.length).join`|`})`, 'g'), (_, name) => '' + replace[name])
-    messages.reply(text.trim())
+    msg.reply(text.trim())
   } catch (e) {
-    messages.reply('Maaf, menu sedang error')
+    msg.reply('Maaf, menu sedang error')
     throw e
   }
 }

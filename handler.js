@@ -1,19 +1,19 @@
 require('./config.js');
 var isNumber = x => typeof x === 'number' && !isNaN(x);
 module.exports = {
-    async handler(messages) {
-        if (!messages) return;
-        let chats = await messages.getChat();
-        let users = await messages.getContact();
+    async handler(msg) {
+        if (!msg) return;
+        let chats = await msg.getChat();
+        let users = await msg.getContact();
         try {
 
             // Database
             try {
-                let user = global.db.data.users[messages.author || messages.from]
-                if (typeof user !== 'object') global.db.data.users[messages.author || messages.from] = {}
+                let user = global.db.data.users[msg.author || msg.from]
+                if (typeof user !== 'object') global.db.data.users[msg.author || msg.from] = {}
                 if (user) {
                     if (!('name' in user)) user.name = users.pushname
-                } else global.db.data.users[messages.author || messages.from] = {
+                } else global.db.data.users[msg.author || msg.from] = {
                     name: users.pushname
                 }
             } catch (e) {
@@ -21,9 +21,9 @@ module.exports = {
             }
 
             // Plugin midman (prevent users to running the plugins)
-            let isGroup = messages.from.endsWith("@g.us");
-            let isROwner = [this.info.me.user, ...global.owner.map(([number]) => number)].map((v) => v?.replace(/[^0-9]/g, "") ).includes((isGroup ? messages.author : messages.from).split("@")[0]);
-            let isOwner = isROwner || messages.fromMe;
+            let isGroup = msg.from.endsWith("@g.us");
+            let isROwner = [this.info.me.user, ...global.owner.map(([number]) => number)].map((v) => v?.replace(/[^0-9]/g, "") ).includes((isGroup ? msg.author : msg.from).split("@")[0]);
+            let isOwner = isROwner || msg.fromMe;
 
             let groupMetadata = isGroup ? chats.groupMetadata : {};
             let participants = isGroup ? groupMetadata.participants : [];
@@ -43,26 +43,26 @@ module.exports = {
               let _prefix = plugin.customPrefix ? plugin.customPrefix : client.prefix ? client.prefix : global.prefix;
               let match = (
                 _prefix instanceof RegExp // RegExp Mode?
-                    ? [[_prefix.exec(messages.body), _prefix]]
+                    ? [[_prefix.exec(msg.body), _prefix]]
                     : Array.isArray(_prefix) // Array?
                     ? _prefix.map((p) => {
                         let re =
                         p instanceof RegExp // RegExp in Array?
                           ? p
                           : new RegExp(str2Regex(p));
-                        return [re.exec(messages.body), re];
+                        return [re.exec(msg.body), re];
                     })
                     : typeof _prefix === "string" // String?
                     ? [
                       [
-                        new RegExp(str2Regex(_prefix)).exec(messages.body),
+                        new RegExp(str2Regex(_prefix)).exec(msg.body),
                         new RegExp(str2Regex(_prefix)),
                       ],
                     ]
                     : [[[], new RegExp()]]
                 ).find((p) => p[1]);
                 if ((usedPrefix = (match[0] || "")[0])) {
-                let noPrefix = messages.body.replace(usedPrefix, "");
+                let noPrefix = msg.body.replace(usedPrefix, "");
                 let [command, ...args] = noPrefix.trim().split` `.filter((v) => v);
                 args = args || [];
                 let _args = noPrefix.trim().split` `.slice(1);
@@ -82,30 +82,30 @@ module.exports = {
                     : false;
         
                 if (!isAccept) continue;
-                messages.plugin = name;
+                msg.plugin = name;
       
                 // Throw the message if didn't meet the required roles.
                 if (plugin.rowner && !isROwner) {
-                    messages.reply("This command can only executed by the real owner!")
+                    msg.reply("This command can only executed by the real owner!")
                     continue;
                 }
                 if (plugin.owner && !isOwner) {
-                    messages.reply("This command can only executed by the owner.")
+                    msg.reply("This command can only executed by the owner.")
                     continue;
                 }
                 if (plugin.admin && !isAdmin) {
-                    messages.reply("This command can only executed by the administrators.");
+                    msg.reply("This command can only executed by the administrators.");
                     continue;
                 }
                 if (plugin.botAdmin && !isBotAdmin) {
-                    messages.reply("Make sure bot is admin before executing this command!");
+                    msg.reply("Make sure bot is admin before executing this command!");
                     continue;
                 }
                 if (plugin.private && isGroup) {
-                    messages.reply("This commnd can only executed on private chat.")
+                    msg.reply("This commnd can only executed on private chat.")
                 }
       
-                messages.isCommand = true;
+                msg.isCommand = true;
                 let extra = {
                     match,
                     usedPrefix,
@@ -115,13 +115,13 @@ module.exports = {
                     command,
                     text,
                     client: this,
-                    messages,
+                    msg,
                     users,
                     isGroup,
                     isAdmin
                 };
                 try {
-                    await plugin.call(this, messages, extra);
+                    await plugin.call(this, msg, extra);
                 } catch (e) {
                     console.log(e);
                 }
@@ -129,7 +129,7 @@ module.exports = {
             }
         } finally {
             // Simplified printed chat
-            require("./lib/print")(this, messages).catch((e) => console.log(e));
+            require("./lib/print")(this, msg).catch((e) => console.log(e));
         }
     }
 }

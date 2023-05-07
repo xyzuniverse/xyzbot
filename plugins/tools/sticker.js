@@ -1,17 +1,17 @@
-let handler = async (messages, { client, text, command }) => {
+let handler = async (msg, { client, text, command }) => {
     let packname = text.split('|')[0] ? text.split('|')[0] : global.sticker.packname
     let author = text.split('|')[1] ? text.split('|')[1] : global.sticker.author
-    let q = messages.hasQuotedMsg ? await messages.getQuotedMessage() : messages
+    let q = msg.hasQuotedMsg ? await msg.getQuotedMessage() : msg
     var isMedia = q.hasMedia && q.type.includes('image') || q.hasMedia && q.type.includes('video') || q.hasMedia && q.type.includes('gif');
     if (isMedia) {
-        messages.react("⏳");
+        msg.react("⏳");
         var media = await q.downloadMedia();
         if (media) {
-            messages.react("✅");
-            await messages.reply(media, undefined, { sendMediaAsSticker: true, stickerName: packname, stickerAuthor: author });
+            msg.react("✅");
+            await msg.reply(media, undefined, { sendMediaAsSticker: true, stickerName: packname, stickerAuthor: author });
         } else {
-            messages.react("⚠️");
-            messages.reply("Conversion into sticker failed, please try again or report to owner for fixing it.");
+            msg.react("⚠️");
+            msg.reply("Conversion into sticker failed, please try again or report to owner for fixing it.");
         }   
     }
 }

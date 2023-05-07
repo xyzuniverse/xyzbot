@@ -1,17 +1,17 @@
-let handler = async (messages, { client, text }) => {
-    if (!messages.hasQuotedMsg) return messages.reply("Reply a view-onced message!")
-    let q = await messages.getQuotedMessage();
+let handler = async (msg, { client, text }) => {
+    if (!msg.hasQuotedMsg) return msg.reply("Reply a view-onced message!")
+    let q = await msg.getQuotedMessage();
     if (q.hasMedia && q._data.isViewOnce) {
-        messages.react("⏳");
+        msg.react("⏳");
         let media = await q.downloadMedia();
         if (media) {
-            messages.react("✅");
-            return messages.reply(media, null);
+            msg.react("✅");
+            return msg.reply(media, null);
         } else {
-            messages.react("⚠️");
-            return messages.reply("Getting media failed! Please try again.");
+            msg.react("⚠️");
+            return msg.reply("Getting media failed! Please try again.");
         }
-    } else return messages.reply("This is not a view-once message!");
+    } else return msg.reply("This is not a view-once message!");
 };
 
 handler.help = ['readviewonce <reply msg with viewoncemessage>'];
