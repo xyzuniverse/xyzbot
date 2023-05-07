@@ -4,7 +4,7 @@ let handler = async(messages, { client, text }) => {
     if (!user?.hoyolab?.cookieToken) return messages.reply("Cookie token not found! Please generate it from hoyolab website.\nTutorial coming soon.")
     try {
         messages.react("⏳");
-        const result = await hoyolab.hsrGetListClaimedRewards(user.hoyolab.cookieToken)
+        const result = await hoyolab.getListClaimedRewards('genshin', user.hoyolab.cookieToken)
         if (result.data) {
             messages.react("✅");
             messages.reply("Last daily check-in claimed: " + result.data.list[0].name + " x" + result.data.list[0].cnt)

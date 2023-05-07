@@ -3,8 +3,8 @@ let handler = async(messages, { client, text }) => {
     let user = global.db.data.users[messages.author || messages.from]
     if (!user?.hoyolab?.cookieToken) return messages.reply("Cookie token not found! Please generate it from hoyolab website.\nTutorial coming soon.")
     messages.react("⏳");
-    const result = await hoyolab.hsrClaimDailyCheckIn(user.hoyolab.cookieToken);
-    const item = await hoyolab.hsrGetListClaimedRewards(user.hoyolab.cookieToken);
+    const result = await hoyolab.claimDailyCheckIn('hsr', user.hoyolab.cookieToken);
+    const item = await hoyolab.getListClaimedRewards('hsr', user.hoyolab.cookieToken);
     if (result.retcode === -5003) {
         messages.react("⚠️");
         messages.reply(
