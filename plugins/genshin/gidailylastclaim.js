@@ -1,7 +1,7 @@
 const hoyolab = require('../../lib/scraper/hoyolab.js');
 let handler = async(messages, { client, text }) => {
     let user = global.db.data.users[messages.author || messages.from]
-    if (!user.hoyolab.cookieToken) return messages.reply("Cookie token not found! Please generate it from hoyolab website.\nTutorial coming soon.")
+    if (!user?.hoyolab?.cookieToken) return messages.reply("Cookie token not found! Please generate it from hoyolab website.\nTutorial coming soon.")
     try {
         messages.react("⏳");
         const result = await hoyolab.hsrGetListClaimedRewards(user.hoyolab.cookieToken)
