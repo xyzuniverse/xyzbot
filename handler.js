@@ -101,6 +101,9 @@ module.exports = {
                     messages.reply("Make sure bot is admin before executing this command!");
                     continue;
                 }
+                if (plugin.private && isGroup) {
+                    messages.reply("This commnd can only executed on private chat.")
+                }
       
                 messages.isCommand = true;
                 let extra = {
