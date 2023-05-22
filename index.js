@@ -76,8 +76,7 @@ const connect = async () => {
   });
 
   client.ev.on("messages.upsert", (msg) => {
-    console.log(JSON.stringify(msg, null, 2));
-    console.log("Serialized", require("./lib/serialize").serializeMessage(msg?.messages[0]));
+    console.log(require("./lib/serialize").serializeMessage(msg?.messages[0]));
   });
 
   client.ev.on("creds.update", async () => {
