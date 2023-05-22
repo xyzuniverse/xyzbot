@@ -1,0 +1,6 @@
+# Sessions, store chats
+.chat_store.json
+.credentials
+
+# Node modules
+node_modules
