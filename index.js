@@ -49,7 +49,7 @@ const connect = async () => {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
-    logger,
+    logger: require("pino")({ level: "silent" }),
     msgRetryCounterCache,
     getMessage,
     version,
@@ -68,7 +68,7 @@ const connect = async () => {
         connect();
       } else {
         logger.error("Disconnected from server because you're logged out, please regenerate a new session.");
-        conn.logout();
+        client.logout();
         fs.unlinkSync("./sessions");
         process.exit();
       }
