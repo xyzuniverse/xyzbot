@@ -6,7 +6,7 @@ const {
   makeCacheableSignalKeyStore,
   makeInMemoryStore,
   useMultiFileAuthState,
-  proto,
+  proto
 } = require("@whiskeysockets/baileys");
 const fs = require("fs");
 const NodeCache = require("node-cache");
@@ -76,7 +76,8 @@ const connect = async () => {
   });
 
   client.ev.on("messages.upsert", (msg) => {
-    console.log(require("./lib/serialize").serializeMessage(msg?.messages[0]));
+    smsg = require("./lib/serialize").serializeMessage(msg?.messages[0]);
+    console.log(smsg)
   });
 
   client.ev.on("creds.update", async () => {
