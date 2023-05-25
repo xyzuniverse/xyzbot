@@ -29,7 +29,7 @@ const msgRetryCounterCache = new NodeCache();
 
 // the store maintains the data of the WA connection in memory
 // can be written out to a file & read from it
-const store = makeInMemoryStore({ logger });
+global.store = makeInMemoryStore({ logger });
 store?.readFromFile("./.chat_store.json");
 // save every 10s
 setInterval(() => {
