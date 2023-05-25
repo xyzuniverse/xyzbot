@@ -4,3 +4,6 @@
 
 # Node modules
 node_modules
+
+# Database
+database.json

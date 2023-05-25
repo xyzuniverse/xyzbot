@@ -39,6 +39,17 @@ setInterval(() => {
 // Prevent to crash if error occured
 process.on("uncaughtException", console.error);
 
+// Database
+const _ = require("lodash");
+var low;
+try {
+  low = require("lowdb");
+} catch {
+  low = require("./lib/lowdb");
+}
+const { Low, JSONFile } = low;
+global.db = new Low(new JSONFile("database.json"));
+
 const connect = async () => {
   const { state, saveCreds } = await useMultiFileAuthState(".credentials");
   const { version } = await fetchLatestBaileysVersion();
@@ -74,10 +85,13 @@ const connect = async () => {
 
   store.bind(client.ev);
 
-  client.ev.on("connection.update", (update) => {
+  client.ev.on("connection.update", async (update) => {
     logger.child(update).info("connection update");
     var { connection, lastDisconnect } = update;
-    if (connection === "open") logger.info("opened and connected to WA Web");
+    if (connection === "open") {
+      logger.info("opened and connected to WA Web");
+      if (global.db.data == null) await loadDatabase();
+    }
     if (connection === "connecting") logger.info("connecting to WA Web");
     if (update.qr) logger.info("Authenticate to continue");
     if (connection === "close") {
@@ -94,10 +108,7 @@ const connect = async () => {
     }
   });
 
-  client.ev.on("messages.upsert", (msg) => {
-    smsg = require("./lib/serialize").serializeMessage(msg?.messages[0]);
-    console.log(smsg);
-  });
+  client.ev.on("messages.upsert", require("./handler").chatHandler.bind(client));
 
   client.ev.on("creds.update", async () => {
     await saveCreds();
@@ -105,6 +116,31 @@ const connect = async () => {
 
   return client;
 };
+
+// Load database if database didn't load properly
+loadDatabase();
+async function loadDatabase() {
+  await global.db.read();
+  global.db.data = {
+    users: {},
+    chats: {},
+    stats: {},
+    msgs: {},
+    sticker: {},
+    settings: {},
+    ...(global.db.data || {}),
+  };
+  global.db.chain = _.chain(global.db.data);
+}
+
+// Save database every minute & exit
+setInterval(async () => {
+  if (global.db) await global.db.write();
+}, 30 * 1000);
+
+process.on("exit", async () => {
+  if (global.db) await global.db.write();
+});
 
 async function getMessage(key) {
   if (store) {

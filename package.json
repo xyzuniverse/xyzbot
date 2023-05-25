@@ -20,6 +20,8 @@
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
     "@whiskeysockets/baileys": "^6.0.1",
+    "lodash": "^4.17.21",
+    "lowdb": "^2.1.0",
     "pino-pretty": "^10.0.0",
     "qrcode-terminal": "^0.12.0"
   }
