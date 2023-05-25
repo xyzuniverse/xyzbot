@@ -72,6 +72,8 @@ const connect = async () => {
     },
   });
 
+  store.bind(client.ev);
+
   client.ev.on("connection.update", (update) => {
     logger.child(update).info("connection update");
     var { connection, lastDisconnect } = update;
