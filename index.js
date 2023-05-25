@@ -6,10 +6,10 @@ const {
   makeCacheableSignalKeyStore,
   makeInMemoryStore,
   useMultiFileAuthState,
-  proto,
 } = require("@whiskeysockets/baileys");
 const fs = require("fs");
 const NodeCache = require("node-cache");
+const helper = require("./lib/helper");
 
 // Logger
 const logger = require("pino")({
@@ -40,7 +40,6 @@ setInterval(() => {
 process.on("uncaughtException", console.error);
 
 // Database
-const _ = require("lodash");
 var low;
 try {
   low = require("lowdb");
@@ -62,7 +61,9 @@ const connect = async () => {
     },
     logger: require("pino")({ level: "silent" }),
     msgRetryCounterCache,
-    getMessage,
+    getMessage: async (key) => {
+      return helper.getMessage(key, store);
+    },
     version,
     patchMessageBeforeSending: (message) => {
       const requiresPatch = !!(message.buttonsMessage || message.templateMessage || message.listMessage);
@@ -90,7 +91,7 @@ const connect = async () => {
     var { connection, lastDisconnect } = update;
     if (connection === "open") {
       logger.info("opened and connected to WA Web");
-      if (global.db.data == null) await loadDatabase();
+      if (global.db.data == null) await helper.loadDatabase();
     }
     if (connection === "connecting") logger.info("connecting to WA Web");
     if (update.qr) logger.info("Authenticate to continue");
@@ -102,7 +103,7 @@ const connect = async () => {
       } else {
         logger.error("Disconnected from server because you're logged out, please regenerate a new session.");
         client.logout();
-        fs.unlinkSync("./sessions");
+        fs.unlinkSync("./.credentials");
         process.exit();
       }
     }
@@ -118,20 +119,7 @@ const connect = async () => {
 };
 
 // Load database if database didn't load properly
-loadDatabase();
-async function loadDatabase() {
-  await global.db.read();
-  global.db.data = {
-    users: {},
-    chats: {},
-    stats: {},
-    msgs: {},
-    sticker: {},
-    settings: {},
-    ...(global.db.data || {}),
-  };
-  global.db.chain = _.chain(global.db.data);
-}
+helper.loadDatabase(global.db);
 
 // Save database every minute & exit
 setInterval(async () => {
@@ -141,15 +129,5 @@ setInterval(async () => {
 process.on("exit", async () => {
   if (global.db) await global.db.write();
 });
-
-async function getMessage(key) {
-  if (store) {
-    const msg = await store.loadMessage(key.remoteJid, key.id);
-    return msg?.message || undefined;
-  }
-  return {
-    conversation: "Hello there!",
-  };
-}
 
 connect().catch((e) => console.error(e));
