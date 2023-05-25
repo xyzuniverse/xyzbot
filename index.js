@@ -53,6 +53,23 @@ const connect = async () => {
     msgRetryCounterCache,
     getMessage,
     version,
+    patchMessageBeforeSending: (message) => {
+      const requiresPatch = !!(message.buttonsMessage || message.templateMessage || message.listMessage);
+      if (requiresPatch) {
+        message = {
+          viewOnceMessage: {
+            message: {
+              messageContextInfo: {
+                deviceListMetadataVersion: 2,
+                deviceListMetadata: {},
+              },
+              ...message,
+            },
+          },
+        };
+      }
+      return message;
+    },
   });
 
   client.ev.on("connection.update", (update) => {
