@@ -8,6 +8,10 @@ global.sticker = {
   author: "xyzbot - based on wwjs.", // Sticker author
 };
 
+global.apiKey = {
+  replicate: "", // Get api-key from replicate website on your account settings
+};
+
 let file = require.resolve(__filename);
 let fs = require("fs");
 let chalk = require("chalk");
