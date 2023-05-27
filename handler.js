@@ -100,6 +100,11 @@ module.exports = {
           }
           if (plugin.private && msg.isGroup) {
             msg.reply("This commnd can only executed on private chat.");
+            continue;
+          }
+          if (plugin.group && !msg.isGroup) {
+            msg.reply("This command can only executed on group chat.");
+            continue;
           }
 
           msg.isCommand = true;
@@ -115,6 +120,7 @@ module.exports = {
             msg,
             isAdmin,
             isBotAdmin,
+            participants,
           };
           try {
             await plugin.call(this, msg, extra);
