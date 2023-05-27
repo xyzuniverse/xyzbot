@@ -32,7 +32,7 @@ module.exports = {
       let user = msg.isGroup ? participants.find((u) => u.id == msg.author) : {};
       let bot = msg.isGroup ? participants.find((u) => u.id == serializeJid(this.user.id)) : {};
 
-      let isAdmin = msg.isGroup ? user?.admin == "admin" || user?.admin == "superdmin" : false;
+      let isAdmin = msg.isGroup ? user?.admin == "admin" || user?.admin == "superadmin" : false;
       let isBotAdmin = msg.isGroup ? bot?.admin : false;
       if (msg.isBaileys) return;
 
