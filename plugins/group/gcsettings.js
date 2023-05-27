@@ -1,17 +1,21 @@
 let handler = async (msg, { client, args, command, usedPrefix }) => {
   let text = args.slice(1).join(" ");
+  let status = true;
   switch (args[0]) {
     case "lock":
     case "unlock":
       try {
         await client.groupSettingUpdate(msg.from, args[0] === "lock" ? "announcement" : "not_announcement");
       } catch (e) {
+        status = false;
         console.error(e);
         msg.react("⚠️");
         return msg.reply("An error occured, please try again later.");
       } finally {
-        msg.react("✅");
-        msg.reply("Group " + args[0] + "ed.");
+        if (status == true) {
+          msg.react("✅");
+          msg.reply("Group " + args[0] + "ed.");
+        }
       }
       break;
     case "setname":
@@ -23,11 +27,14 @@ let handler = async (msg, { client, args, command, usedPrefix }) => {
       try {
         await client.groupUpdateSubject(msg.from, text);
       } catch (e) {
+        status = false;
         console.error(e);
         msg.reply("An error occured, please try again later.");
       } finally {
-        msg.react("✅");
-        msg.reply("Successfully changed the group subject.");
+        if (status == true) {
+          msg.react("✅");
+          msg.reply("Successfully changed the group subject.");
+        }
       }
       break;
     case "setdesc":
@@ -39,11 +46,14 @@ let handler = async (msg, { client, args, command, usedPrefix }) => {
       try {
         await client.groupUpdateDescription(msg.from, text);
       } catch (e) {
+        status = false;
         console.error(e);
         msg.reply("An error occured, please try again later.");
       } finally {
-        msg.react("✅");
-        msg.reply("Successfully changed the group description.");
+        if (status == true) {
+          msg.react("✅");
+          msg.reply("Successfully changed the group description.");
+        }
       }
       break;
     default:
