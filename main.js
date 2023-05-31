@@ -192,10 +192,11 @@ setInterval(async () => {
   if (global.db) await global.db.write(); // Save database every minute
 
   // Auto clear if message store overloaded
-  var storeSize = helper.getFileSize("./.chat_store.json");
-  var storeLimit = helper.sizeLimit(storeSize, 2);
-  if (storeLimit.oversize) {
+  var storeSize = fs.statSync("./.chat_store.json").size;
+  if (storeSize >= 128000000 /* 128 MB */) {
     fs.writeFileSync("./.chat_store.json", stable({ chats: [], contacts: {}, messages: {} }));
+    logger.info("Store chats oversized, resetting...");
+    process.send("reset");
   }
 }, 30 * 1000);
 
