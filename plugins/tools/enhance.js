@@ -18,7 +18,18 @@ let handler = async (msg, { client, text }) => {
       const output = await replicate.run(model, { input });
       if (output) {
         msg.react("✅");
-        return await msg.reply({ image: { url: output }, caption: "Here." + "\n" + output });
+        return await client.sendMessage(
+          msg.from,
+          {
+            text: "Here.",
+            footer: global.sticker.author,
+            templateButtons: [{ index: 1, urlButton: { displayText: "Click here to download!", url: output } }],
+            image: { url: output },
+          },
+          {
+            quoted: msg,
+          }
+        );
       }
     } catch (e) {
       return msg.reply(e.toString());
