@@ -11,6 +11,7 @@
   "author": "xyzuniverse",
   "license": "ISC",
   "dependencies": {
+    "@vermaysha/hoyolab-api": "^3.1.2",
     "awesome-phonenumber": "^5.6.0",
     "axios": "^1.4.0",
     "chalk": "^4.1.1",
