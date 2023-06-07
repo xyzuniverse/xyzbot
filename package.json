@@ -1,5 +1,5 @@
 {
-  "name": "xyzbot-wwjs",
+  "name": "xyzbot - wwjs",
   "version": "1.0.0",
   "description": "mnmlist whatsapp bot based on whatsapp-web.js",
   "main": "index.js",
@@ -14,7 +14,9 @@
     "awesome-phonenumber": "^5.6.0",
     "axios": "^1.4.0",
     "chalk": "^4.1.1",
+    "figlet": "^1.6.0",
     "lodash": "^4.17.21",
+    "lolcatjs": "^2.4.1",
     "lowdb": "^2.1.0",
     "path": "^0.12.7",
     "pino": "^8.12.0",
