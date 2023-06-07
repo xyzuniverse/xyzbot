@@ -61,6 +61,6 @@ start("main.js");
 function centerString(str) {
   let columns = require("window-size");
   let space = (columns.width > 0 ? columns.width : 80) - str.length;
-  let spaceRepeat = " ".repeat(space / 2);
+  let spaceRepeat = " ".repeat(Math.ceil((space < 0 ? 80 : space) / 2));
   return `${spaceRepeat}${str}${spaceRepeat}`;
 }
