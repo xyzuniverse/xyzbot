@@ -24,6 +24,7 @@
     "pino-pretty": "^10.0.0",
     "qrcode-terminal": "^0.12.0",
     "syntax-error": "^1.4.0",
-    "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js"
+    "whatsapp-web.js": "github:pedroslopez/whatsapp-web.js",
+    "window-size": "^1.1.1"
   }
 }
