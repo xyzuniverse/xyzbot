@@ -60,6 +60,7 @@ start("main.js");
 
 function centerString(str) {
   let columns = process.stdout.columns;
+  if (columns == 0) columns = 80;
   let space = columns - str.length;
   let spaceRepeat = " ".repeat(space / 2);
   return `${spaceRepeat}${str}${spaceRepeat}`;
