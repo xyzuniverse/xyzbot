@@ -10,7 +10,8 @@ let handler = async (msg, { text, command, usedPrefix }) => {
     return msg.reply(e.toString());
   } finally {
     if (result) {
-      let user = global.db.data.users[msg.author];
+      let user = global.db.data.users[msg.from || msg.author];
+      if (!("hoyolab" in user)) user.hoyolab = {};
       user.hoyolab = {
         cookieToken: result,
       };
