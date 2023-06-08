@@ -33,6 +33,6 @@ let handler = async (msg, { client, text, args, usedPrefix, command }) => {
 handler.help = ["hsrcharacter <query>", "hsrchar <query>"];
 handler.tags = ["hyv"];
 
-handler.command = /^hsr|(char?acter)$/i;
+handler.command = /^hsrchar?acter$/i;
 
 module.exports = handler;
