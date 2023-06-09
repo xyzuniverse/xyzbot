@@ -2,22 +2,20 @@ let { spawn } = require("child_process");
 let path = require("path");
 let fs = require("fs");
 let package = require("./package.json");
-let figlet = require("figlet");
-let lolcatjs = require("lolcatjs");
-lolcatjs.options.seed = Math.round(Math.random() * 1000);
-lolcatjs.options.colors = true;
-
-let _banner = figlet.textSync(package.name, {
-  font: "ANSI Shadow",
-});
+let cfonts = require("cfonts");
 let bannerStr = `${package.name} by ${package.author}`;
 
 // Banner
-console.log("\n");
-for (let str of _banner.split("\n")) {
-  lolcatjs.fromString(centerString(str));
-}
-lolcatjs.fromString(centerString(bannerStr) + "\n\n");
+let colors = ["green", "blue", "magenta", "cyan"];
+cfonts.say(package.name, {
+  font: "block",
+  align: "center",
+  gradient: [pickRandom(colors), pickRandom(colors)],
+});
+cfonts.say(bannerStr, {
+  font: "console",
+  align: "center",
+});
 console.log("Starting...");
 
 var isRunning = false;
@@ -58,9 +56,6 @@ function start(file) {
 
 start("main.js");
 
-function centerString(str) {
-  let columns = require("window-size");
-  let space = (columns.width > 0 ? columns.width : 80) - str.length;
-  let spaceRepeat = " ".repeat(Math.ceil((space < 0 ? 80 : space) / 2));
-  return `${spaceRepeat}${str}${spaceRepeat}`;
+function pickRandom(list) {
+  return list[Math.floor(Math.random() * list.length)];
 }
