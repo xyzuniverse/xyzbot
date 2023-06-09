@@ -41,6 +41,9 @@ function start(file) {
       case "uptime":
         p.send(process.uptime());
         break;
+      case "exit":
+        process.exit();
+        break;
     }
   });
   p.on("exit", (code) => {
