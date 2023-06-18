@@ -30,7 +30,7 @@ let handler = async (msg, { command }) => {
       msg.reply(
         "```" +
           `Current Trailblazer Power: ${current_stamina}/${max_stamina}${
-            stamina_recover_time === 0 ? ", Sudah penuh" : `, ${toHoursAndMinutes(stamina_recover_time)} lagi untuk penuh`
+            stamina_recover_time === "0" ? ", Sudah penuh" : `, ${toHoursAndMinutes(stamina_recover_time)} lagi untuk penuh`
           }\nPelaksanaan Tugas (${accepted_epedition_num}/${total_expedition_num})\nExpeditions/Tugas:\n${_expeditions.join("\n")}` +
           "```"
       );
