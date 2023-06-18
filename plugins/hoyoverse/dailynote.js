@@ -21,13 +21,17 @@ let handler = async (msg, { command }) => {
       let _expeditions = [];
       let { current_stamina, max_stamina, stamina_recover_time, accepted_epedition_num, total_expedition_num, expeditions } = result;
       expeditions.forEach((avatar) => {
-        _expeditions.push(`- ${avatar.name}, Status: ${avatar.status === "Finished" ? "Selesai, belum diclaim" : "Masih berjalan"}`);
+        _expeditions.push(
+          `- ${avatar.name}, Status: ${avatar.status === "Finished" ? "Selesai, belum diclaim" : "Masih berjalan"}${
+            avatar.status === "Finished" ? "" : `, ETA: ${toHoursAndMinutes(avatar.remaining_time)}`
+          }`
+        );
       });
       msg.reply(
         "```" +
-          `Current Trailblazer Power: ${current_stamina}/${max_stamina}\nPelaksanaan Tugas (${accepted_epedition_num}/${total_expedition_num})\nExpeditions/Tugas:\n${_expeditions.join(
-            "\n"
-          )}` +
+          `Current Trailblazer Power: ${current_stamina}/${max_stamina}${
+            stamina_recover_time === 0 ? ", Sudah penuh" : `, ${toHoursAndMinutes(stamina_recover_time)} lagi untuk penuh`
+          }\nPelaksanaan Tugas (${accepted_epedition_num}/${total_expedition_num})\nExpeditions/Tugas:\n${_expeditions.join("\n")}` +
           "```"
       );
     } else {
@@ -46,12 +50,14 @@ let handler = async (msg, { command }) => {
         _giexpeditions.push(
           `- ${avatar.avatar_side_icon.split("Side_")[1].split(".png")[0]}, Status: ${
             avatar.status === "Finished" ? "Selesai, belum diclaim" : "Masih berjalan"
-          }`
+          }${avatar.status == "Finished" ? "" : ` ETA: ${toHoursAndMinutes(avatar.remained_time)}`}`
         );
       });
       msg.reply(
         "```" +
-          `Current Resin: ${current_resin}/${max_resin}\nEkspedisi status (${current_expedition_num}/${max_expedition_num})\n${finished_task_num}/${total_task_num} Misi harian diselesaikan\nEkspedisi/Tugas:\n${_giexpeditions.join(
+          `Current Resin: ${current_resin}/${max_resin}${
+            resin_recovery_time === "0" ? ", Sudah penuh" : `, ${toHoursAndMinutes(resin_recovery_time)} lagi untuk penuh`
+          }\nEkspedisi status (${current_expedition_num}/${max_expedition_num})\n${finished_task_num}/${total_task_num} Misi harian diselesaikan\nEkspedisi/Tugas:\n${_giexpeditions.join(
             "\n"
           )}` +
           "```"
@@ -64,3 +70,13 @@ handler.help = ["hsrdailynote", "gidailynote"];
 handler.tags = ["hyv"];
 handler.command = ["hsrdailynote", "gidailynote"];
 module.exports = handler;
+
+function toHoursAndMinutes(totalSeconds) {
+  const totalMinutes = Math.floor(totalSeconds / 60);
+
+  const seconds = totalSeconds % 60;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${hours} Jam ${minutes} Menit ${seconds} Detik`;
+}
