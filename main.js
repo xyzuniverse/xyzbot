@@ -137,7 +137,7 @@ async function loadDatabase() {
 
 // Save database every minute
 setInterval(async () => {
-  if (global.db) await global.db.write();
+  await global.db.write();
 }, 30 * 1000);
 
 // Readline
