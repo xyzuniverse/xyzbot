@@ -19,6 +19,6 @@ let handler = async (msg, { client, text, args }) => {
 handler.help = ["readviewonce <reply msg with viewoncemessage>"];
 handler.tags = ["tools"];
 
-handler.command = /^(readviewonce)$/i;
+handler.command = /^(readviewonce|rvo)$/i;
 
 module.exports = handler;
