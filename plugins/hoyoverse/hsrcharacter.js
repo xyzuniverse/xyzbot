@@ -2,6 +2,7 @@ const { MessageMedia } = require("whatsapp-web.js");
 
 let handler = async (msg, { client, text, args, usedPrefix, command }) => {
   if (!text) return msg.reply("```" + `Format: ${usedPrefix}${command} <query>` + "```");
+  msg.react("⚡");
   try {
     var media;
     text = text.toLowerCase();

@@ -5,6 +5,7 @@ let handler = async (msg, { command, text }) => {
   let user = global.db.data.users[msg.author];
   if (!user?.hoyolab?.cookieToken)
     return msg.reply("Cookie token tidak ditemukan! Silahan generate cookie token di hoyolab website.\nTutorial coming soon.");
+  msg.react("⚡");
   var result;
   try {
     let _game = command.split("redeemcode")[0] == "gi" ? GamesEnum.GENSHIN_IMPACT : GamesEnum.HONKAI_STAR_RAIL;
