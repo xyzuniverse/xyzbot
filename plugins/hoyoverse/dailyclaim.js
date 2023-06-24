@@ -16,9 +16,13 @@ let handler = async (msg, { command }) => {
       msg.reply(e);
     } finally {
       if (result && result.code === 0) {
-        await message.edit(`Berhasil claim daily, silahkan login ke game untuk melanjutkan.`);
+        delay(2000).then(async () => {
+          return await message.edit(`Berhasil claim daily, silahkan login ke game untuk melanjutkan.`);
+        });
       } else if (result && result.code === -5003) {
-        await message.edit(`${result.status}\nTerakhir anda mengklaim: x${result.reward.award.cnt} ${result.reward.award.name}`);
+        delay(2000).then(async () => {
+          return await message.edit(`${result.status}\nTerakhir anda mengklaim: x${result.reward.award.cnt} ${result.reward.award.name}`);
+        });
       } else msg.reply("```" + JSON.stringify(result, null, 2) + "```");
     }
   });
@@ -28,3 +32,9 @@ handler.help = ["hsrdailyclaim", "gidailyclaim"];
 handler.tags = ["hyv"];
 handler.command = ["hsrdailyclaim", "gidailyclaim"];
 module.exports = handler;
+
+function delay(milliseconds) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}

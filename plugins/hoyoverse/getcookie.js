@@ -20,19 +20,27 @@ let handler = async (msg, { text, command, usedPrefix }) => {
           cookie: result,
         });
         let _userinfo = await client.getUserAccountInfo();
-        if (!_userinfo.data) return await message.edit("```" + JSON.stringify(_userinfo) + "```");
+        if (!_userinfo.data) return await message.reply("```" + JSON.stringify(_userinfo) + "```");
         await global.db.write();
-        await message.edit(
-          `Cookie token telah disimpan, silahkan ketik command ${usedPrefix}${
-            command.split("getcookie")[0]
-          }setserver <server yang dipilih> agar beberapa fitur API hoyoverse lebih akurat.`
-        );
+        delay(2000).then(async () => {
+          return await message.edit(
+            `Cookie token telah disimpan, silahkan ketik command ${usedPrefix}${
+              command.split("getcookie")[0]
+            }setserver <server yang dipilih> agar beberapa fitur API hoyoverse lebih akurat.`
+          );
+        });
       } else return msg.reply("A error occured, maybe cookie token didn't included properly.\nPlease try again.");
     }
-  })
+  });
 };
 
 handler.help = ["gigetcookie <cookietoken>", "hsrgetcookie <cookietoken>"];
 handler.tags = ["hyv"];
 handler.command = ["gigetcookie", "hsrgetcookie"];
 module.exports = handler;
+
+function delay(milliseconds) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
