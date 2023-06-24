@@ -11,8 +11,10 @@ let handler = async (msg, { client, isOwner, command, text }) => {
       o = e;
     } finally {
       let { stdout, stderr } = o;
-      if (stdout.trim()) await message.edit(stdout);
-      if (stderr.trim()) await message.edit(stderr);
+      delay(2000).then(async () => {
+        if (stdout.trim()) await message.edit(stdout);
+        if (stderr.trim()) await message.edit(stderr);
+      });
     }
   });
 };
@@ -20,3 +22,9 @@ handler.customPrefix = /^[$] /;
 handler.command = new RegExp();
 handler.rowner = true;
 module.exports = handler;
+
+function delay(milliseconds) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
