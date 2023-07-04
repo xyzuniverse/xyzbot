@@ -5,7 +5,7 @@ global.owner = [
 
 global.sticker = {
   packname: "xyzbot's stickers.", // Sticker packname
-  author: "xyzbot - based on wwjs.", // Sticker author
+  author: "xyzbot - based on baileys.", // Sticker author
 };
 
 global.apiKey = {
