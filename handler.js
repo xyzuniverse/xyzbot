@@ -113,6 +113,17 @@ module.exports = {
           }
 
           msg.isCommand = true;
+
+          // Cooldown handling
+          if (global.db.data.users[msg.author].isOnCooldown) {
+            if (isOwner) continue;
+            const currentTime = new Date();
+            const remainingTime = global.db.data.users[msg.author].cooldownEndTime - currentTime;
+            const remainingSeconds = Math.ceil(remainingTime / 1000);
+            msg.reply(`You're on cooldown. Please wait ${remainingSeconds} seconds.`);
+            continue;
+          }
+
           let extra = {
             match,
             usedPrefix,
@@ -137,6 +148,17 @@ module.exports = {
     } catch (e) {
       console.error("HandlerError:", e);
     } finally {
+      if (msg.isCommand) {
+        let user = global.db.data.users[msg.author];
+        user.isOnCooldown = true;
+        user.cooldownEndTime = new Date(Date.now() + 5000); // 5 seconds cooldown
+        // Clear the cooldown after 5 seconds
+        setTimeout(() => {
+          user.isOnCooldown = false;
+          user.cooldownEndTime = null;
+        }, 5000); // 5 seconds cooldown
+      }
+
       require("./lib/print")(client, msg);
     }
   },
