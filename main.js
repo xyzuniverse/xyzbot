@@ -4,7 +4,6 @@ const {
   DisconnectReason,
   fetchLatestBaileysVersion,
   makeCacheableSignalKeyStore,
-  makeInMemoryStore,
   useMultiFileAuthState,
 } = require("@whiskeysockets/baileys");
 const fs = require("fs");
@@ -29,15 +28,6 @@ const logger = require("pino")({
 // external map to store retry counts of messages when decryption/encryption fails
 // keep this out of the socket itself, so as to prevent a message decryption/encryption loop across socket restarts
 const msgRetryCounterCache = new NodeCache();
-
-// the store maintains the data of the WA connection in memory
-// can be written out to a file & read from it
-global.store = makeInMemoryStore({ logger });
-store?.readFromFile("./.chat_store.json");
-// save every 10s
-setInterval(() => {
-  store?.writeToFile("./.chat_store.json");
-}, 10_000);
 
 // Prevent to crash if error occured
 process.on("uncaughtException", console.error);
@@ -118,13 +108,11 @@ const connect = async () => {
     },
     logger: require("pino")({ level: "silent" }),
     msgRetryCounterCache,
-    getMessage: async (key) => {
-      return helper.getMessage(key, store);
-    },
     version,
   });
 
-  store.bind(client.ev);
+  // Bind logger to client
+  client.logger = logger;
 
   client.ev.on("connection.update", async (update) => {
     logger.child(update).info("connection update");
@@ -163,14 +151,6 @@ helper.loadDatabase(global.db);
 
 setInterval(async () => {
   if (global.db) await global.db.write(); // Save database every minute
-
-  // Auto clear if message store overloaded
-  var storeSize = fs.statSync("./.chat_store.json").size;
-  if (storeSize >= 128000000 /* 128 MB */) {
-    fs.writeFileSync("./.chat_store.json", stable({ chats: [], contacts: {}, messages: {} }));
-    logger.info("Store chats oversized, resetting...");
-    process.send("reset");
-  }
 }, 30 * 1000);
 
 process.on("exit", async () => {

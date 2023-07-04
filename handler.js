@@ -5,6 +5,11 @@ module.exports = {
   async chatHandler(messageUpdate) {
     if (!messageUpdate.messages[0]) return;
     let msg = serialize.serializeMessage(this, messageUpdate?.messages[0]);
+
+    const Tnow = (new Date() / 1000).toFixed(0);
+    const msgTime = Tnow - msg.messageTimestamp;
+    if (msgTime > 5000) return this.logger.info(`message ${Intervalmsg} ago has been skipped to prevent logspam.`);
+
     try {
       // Database
       try {
