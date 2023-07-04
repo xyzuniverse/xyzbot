@@ -122,23 +122,6 @@ const connect = async () => {
       return helper.getMessage(key, store);
     },
     version,
-    patchMessageBeforeSending: (message) => {
-      const requiresPatch = !!(message.buttonsMessage || message.templateMessage || message.listMessage);
-      if (requiresPatch) {
-        message = {
-          viewOnceMessage: {
-            message: {
-              messageContextInfo: {
-                deviceListMetadataVersion: 2,
-                deviceListMetadata: {},
-              },
-              ...message,
-            },
-          },
-        };
-      }
-      return message;
-    },
   });
 
   store.bind(client.ev);
@@ -177,16 +160,6 @@ const connect = async () => {
 
 // Load database if database didn't load properly
 helper.loadDatabase(global.db);
-
-// Auto restart if ram usage has reached the limit, if you want to use enter the ram size in bytes
-const ramCheck = setInterval(() => {
-  var ramUsage = process.memoryUsage().rss;
-  if (ramUsage >= 512000000) {
-    // 512 MB (optimized for pterodactyl panel ig?)
-    clearInterval(ramCheck);
-    process.send("reset");
-  }
-}, 60 * 1000);
 
 setInterval(async () => {
   if (global.db) await global.db.write(); // Save database every minute
