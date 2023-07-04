@@ -115,8 +115,7 @@ module.exports = {
           msg.isCommand = true;
 
           // Cooldown handling
-          if (global.db.data.users[msg.author].isOnCooldown) {
-            if (isOwner) continue;
+          if (global.db.data.users[msg.author].isOnCooldown && !isOwner) {
             const currentTime = new Date();
             const remainingTime = global.db.data.users[msg.author].cooldownEndTime - currentTime;
             const remainingSeconds = Math.ceil(remainingTime / 1000);
