@@ -1,15 +1,25 @@
-const { GenshinImpact, HonkaiStarRail, GamesEnum } = require("hoyoapi");
+const { GenshinImpact, HonkaiStarRail, GamesEnum, HonkaiImpact } = require("hoyoapi");
 
 let handler = async (msg, { command }) => {
   let user = global.db.data.users[msg.author || msg.from];
-  if (!user?.hoyolab?.cookieToken)
-    return msg.reply("Cookie token tidak ditemukan! Silahan generate cookie token di hoyolab website.\nTutorial coming soon.");
   msg.reply("Just a moment...").then(async (message) => {
     var result;
     try {
-      let _game = command.split("dailyclaim")[0] == "gi" ? GamesEnum.GENSHIN_IMPACT : GamesEnum.HONKAI_STAR_RAIL;
-      let options = { cookie: user.hoyolab.cookieToken, lang: "id-id", uid: user.hoyolab[_game].uid };
-      let game = command.split("dailyclaim")[0] == "gi" ? new GenshinImpact(options) : new HonkaiStarRail(options);
+      let _game =
+        command.split("dailyclaim")[0] == "gi"
+          ? GamesEnum.GENSHIN_IMPACT
+          : command.split("dailyclaim")[0] == "hsr"
+          ? GamesEnum.HONKAI_STAR_RAIL
+          : GamesEnum.HONKAI_IMPACT;
+      let cookieToken = user.hoyolab?.cookieToken[_game] ? user.hoyolab.cookieToken[_game] : user.hoyolab.cookieToken;
+      if (!cookieToken) return msg.reply("Cookie token tidak ditemukan! Silahan generate cookie token di hoyolab website.\nTutorial coming soon.");
+      let options = { cookie: cookieToken, lang: "id-id", uid: user.hoyolab[_game].uid };
+      let game =
+        command.split("dailyclaim")[0] == "gi"
+          ? new GenshinImpact(options)
+          : command.split("dailyclaim")[0] == "hsr"
+          ? new HonkaiStarRail(options)
+          : new HonkaiImpact(options);
       result = await game.daily.claim();
     } catch (e) {
       console.error(e);
@@ -28,9 +38,9 @@ let handler = async (msg, { command }) => {
   });
 };
 
-handler.help = ["hsrdailyclaim", "gidailyclaim"];
+handler.help = ["hsrdailyclaim", "gidailyclaim", "hi3dailyclaim"];
 handler.tags = ["hyv"];
-handler.command = ["hsrdailyclaim", "gidailyclaim"];
+handler.command = ["hsrdailyclaim", "gidailyclaim", "hi3dailyclaim"];
 module.exports = handler;
 
 function delay(milliseconds) {
