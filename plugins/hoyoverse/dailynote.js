@@ -1,9 +1,7 @@
-const { Genshin, HonkaiStarRail: _HSR, GamesEnum } = require("@vermaysha/hoyolab-api");
-const { HonkaiStarRail } = require("../../lib/hoyolab-api.getuserinfo");
-const StarRail = HonkaiStarRail(_HSR);
+const { GenshinImpact, HonkaiStarRail, GamesEnum } = require("hoyoapi");
 
 let handler = async (msg, { command }) => {
-  let user = global.db.data.users[msg.author];
+  let user = global.db.data.users[msg.author || msg.from];
   if (!user?.hoyolab?.cookieToken)
     return msg.reply("Cookie token tidak ditemukan! Silahan generate cookie token di hoyolab website.\nTutorial coming soon.");
   var result;
@@ -12,8 +10,9 @@ let handler = async (msg, { command }) => {
     try {
       let _game = command.split("dailynote")[0] == "gi" ? GamesEnum.GENSHIN_IMPACT : GamesEnum.HONKAI_STAR_RAIL;
       let options = { cookie: user.hoyolab.cookieToken, lang: "id-id", uid: user.hoyolab[_game].uid };
-      let game = command.split("dailynote")[0] == "gi" ? new Genshin(options) : new StarRail(options);
-      result = await game.dailyNote();
+      let game = command.split("dailynote")[0] == "gi" ? new GenshinImpact(options) : new HonkaiStarRail(options);
+      result = command.split("dailynote")[0] == "gi" ? await game.record.dailyNote() : await game.record.note();
+      console.log(result);
     } catch (e) {
       console.error(e);
       msg.reply(e);
@@ -44,15 +43,15 @@ let handler = async (msg, { command }) => {
           resin_recovery_time,
           finished_task_num,
           total_task_num,
-          expeditions,
           current_expedition_num,
           max_expedition_num,
+          expeditions,
         } = result;
         expeditions.forEach((avatar) => {
           _giexpeditions.push(
-            `- ${avatar.avatar_side_icon.split("Side_")[1].split(".png")[0]}, Status: ${
-              avatar.status === "Finished" ? "Selesai, belum diclaim" : "Masih berjalan"
-            }${avatar.status == "Finished" ? "" : ` ETA: ${toHoursAndMinutes(avatar.remained_time)}`}`
+            `- (Unknown Character, on maintenance state), Status: ${avatar.status === "Finished" ? "Selesai, belum diclaim" : "Masih berjalan"}${
+              avatar.status == "Finished" ? "" : ` ETA: ${toHoursAndMinutes(avatar.remained_time)}`
+            }`
           );
         });
         str =

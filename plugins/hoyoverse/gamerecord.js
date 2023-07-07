@@ -1,9 +1,7 @@
-const { Genshin, HonkaiStarRail: _HSR, GamesEnum } = require("@vermaysha/hoyolab-api");
-const { HonkaiStarRail } = require("../../lib/hoyolab-api.getuserinfo");
-const StarRail = HonkaiStarRail(_HSR);
+const { GenshinImpact, HonkaiStarRail, GamesEnum } = require("hoyoapi");
 
 let handler = async (msg, { command }) => {
-  let user = global.db.data.users[msg.author];
+  let user = global.db.data.users[msg.author || msg.from];
   if (!user?.hoyolab?.cookieToken)
     return msg.reply("Cookie token tidak ditemukan! Silahan generate cookie token di hoyolab website.\nTutorial coming soon.");
   msg.reply("Just a moment...").then(async (message) => {
@@ -12,8 +10,8 @@ let handler = async (msg, { command }) => {
     try {
       let _game = command.split("gamerecord")[0] == "gi" ? GamesEnum.GENSHIN_IMPACT : GamesEnum.HONKAI_STAR_RAIL;
       let options = { cookie: user.hoyolab.cookieToken, lang: "id-id", uid: user.hoyolab[_game].uid };
-      let game = command.split("gamerecord")[0] == "gi" ? new Genshin(options) : new StarRail(options);
-      result = await game.records();
+      let game = command.split("gamerecord")[0] == "gi" ? new GenshinImpact(options) : new HonkaiStarRail(options);
+      result = await (await game.record.records()).stats;
     } catch (e) {
       console.error(e);
       msg.reply(e);
@@ -29,7 +27,6 @@ let handler = async (msg, { command }) => {
           }Forgotten Hall` +
           "```";
       } else {
-        result = result.stats;
         str =
           "```" +
           `${result.active_day_number} Days active\n${result.achievement_number} Achivement unlocked\n${

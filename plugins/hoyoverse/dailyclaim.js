@@ -1,7 +1,7 @@
-const { Genshin, HonkaiStarRail, GamesEnum } = require("@vermaysha/hoyolab-api");
+const { GenshinImpact, HonkaiStarRail, GamesEnum } = require("hoyoapi");
 
 let handler = async (msg, { command }) => {
-  let user = global.db.data.users[msg.author];
+  let user = global.db.data.users[msg.author || msg.from];
   if (!user?.hoyolab?.cookieToken)
     return msg.reply("Cookie token tidak ditemukan! Silahan generate cookie token di hoyolab website.\nTutorial coming soon.");
   msg.reply("Just a moment...").then(async (message) => {
@@ -9,8 +9,8 @@ let handler = async (msg, { command }) => {
     try {
       let _game = command.split("dailyclaim")[0] == "gi" ? GamesEnum.GENSHIN_IMPACT : GamesEnum.HONKAI_STAR_RAIL;
       let options = { cookie: user.hoyolab.cookieToken, lang: "id-id", uid: user.hoyolab[_game].uid };
-      let game = command.split("dailyclaim")[0] == "gi" ? new Genshin(options) : new HonkaiStarRail(options);
-      result = await game.dailyClaim();
+      let game = command.split("dailyclaim")[0] == "gi" ? new GenshinImpact(options) : new HonkaiStarRail(options);
+      result = await game.daily.claim();
     } catch (e) {
       console.error(e);
       msg.reply(e);

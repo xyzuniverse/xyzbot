@@ -1,18 +1,18 @@
-const { Genshin, HonkaiStarRail, GamesEnum, Route } = require("@vermaysha/hoyolab-api");
+const { GenshinImpact, HonkaiStarRail, GamesEnum, REDEEM_CLAIM_API } = require("hoyoapi");
 
 let handler = async (msg, { command, text }) => {
   if (!text) return msg.reply("Masukkan kode redeem!");
-  let user = global.db.data.users[msg.author];
+  let user = global.db.data.users[msg.author || msg.from];
   if (!user?.hoyolab?.cookieToken)
     return msg.reply("Cookie token tidak ditemukan! Silahan generate cookie token di hoyolab website.\nTutorial coming soon.");
   msg.react("⚡");
-  var result;
+  let result;
   try {
     let _game = command.split("redeemcode")[0] == "gi" ? GamesEnum.GENSHIN_IMPACT : GamesEnum.HONKAI_STAR_RAIL;
-    let options = { cookie: user.hoyolab.cookieToken, lang: "id", uid: user.hoyolab[_game].uid, region: user.hoyolab[_game].server };
-    let game = command.split("redeemcode")[0] == "gi" ? new Genshin(options) : new HonkaiStarRail(options);
+    let options = { cookie: user.hoyolab.cookieToken, lang: "id", uid: user.hoyolab[_game].uid };
+    let game = command.split("redeemcode")[0] == "gi" ? new GenshinImpact(options) : new HonkaiStarRail(options);
     if (command.includes("hsr")) {
-      game.request.setParams({
+      game.request.setQueryParams({
         uid: user.hoyolab[_game].uid,
         region: user.hoyolab[_game].server,
         game_biz: "hkrpg_global",
@@ -20,8 +20,8 @@ let handler = async (msg, { command, text }) => {
         lang: "id",
         sLangKey: "id",
       });
-      result = await game.request.send(Route.GENSHIN_REDEEM_CODE.replace("hk4e", "hkrpg").replace("hoyolab", "hoyoverse"));
-    } else result = await game.redeemCode(text);
+      result = await (await game.request.send(REDEEM_CLAIM_API.replace("hk4e", "hkrpg").replace("hoyolab", "hoyoverse"))).response;
+    } else result = await game.redeem.claim(text);
   } catch (e) {
     console.error(e);
     msg.reply(e);

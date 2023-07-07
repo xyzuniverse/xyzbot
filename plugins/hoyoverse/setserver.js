@@ -1,13 +1,13 @@
 const { hoyoverse } = require("../../lib/hoyolab-api.getuserinfo");
-const { GamesEnum } = require("@vermaysha/hoyolab-api");
+const { GamesEnum } = require("hoyoapi");
 
 let handler = async (msg, { client, args, text, command }) => {
-  let user = global.db.data.users[msg.author];
+  let user = global.db.data.users[msg.author || msg.from];
   if (!user?.hoyolab?.cookieToken)
     return msg.reply("Cookie token tidak ditemukan! Silahan generate cookie token di hoyolab website.\nTutorial coming soon.");
   try {
     let _user = new hoyoverse({ cookie: user.hoyolab.cookieToken });
-    let _game = await (await _user.getUserAccountInfo()).data.list;
+    let _game = await (await _user.getUserAccountInfo()).response.data.list;
     let game = command.split("setserver")[0] == "gi" ? GamesEnum.GENSHIN_IMPACT : GamesEnum.HONKAI_STAR_RAIL;
     let user_data = _game.find((v) => v.region == recognizeServer(game, text.toLowerCase()));
     if (user_data) {

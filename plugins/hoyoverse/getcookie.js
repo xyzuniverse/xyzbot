@@ -1,10 +1,10 @@
-const { Cookie, GamesEnum } = require("@vermaysha/hoyolab-api");
+const { Cookie, GamesEnum } = require("hoyoapi");
 const { hoyoverse } = require("../../lib/hoyolab-api.getuserinfo");
 
 let handler = async (msg, { text, command, usedPrefix }) => {
   if (!text) return msg.reply("Insert the cookie token!");
   msg.reply("Just a moment...").then(async (message) => {
-    var result;
+    let result;
     try {
       result = Cookie.parseCookieString(text);
     } catch (e) {
@@ -20,7 +20,7 @@ let handler = async (msg, { text, command, usedPrefix }) => {
           cookie: result,
         });
         let _userinfo = await client.getUserAccountInfo();
-        if (!_userinfo.data) return await message.reply("```" + JSON.stringify(_userinfo) + "```");
+        if (!_userinfo.response.data) return await message.reply("```" + JSON.stringify(_userinfo) + "```");
         await global.db.write();
         delay(2000).then(async () => {
           return await message.edit(
