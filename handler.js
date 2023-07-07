@@ -19,6 +19,11 @@ module.exports = {
       console.error(e);
     }
 
+    // Prevent to load older msgs
+    const Tnow = (new Date() / 1000).toFixed(0);
+    const tlimit = Tnow - msg.timestamp;
+    if (tlimit > 5000) return logger.info(`Message 5 seconds ago has been skipped to prevent spamming.`);
+
     try {
       // Database
       try {
