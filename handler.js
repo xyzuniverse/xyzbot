@@ -30,7 +30,7 @@ module.exports = {
       let groupMetadata = isGroup ? chats.groupMetadata : {};
       let participants = isGroup ? groupMetadata.participants : [];
 
-      let user = isGroup ? participants.find((u) => u.id.user == users.number) : {};
+      let user = isGroup ? participants.find((u) => u.id._serialized == users.id._serialized) : {};
       let bot = isGroup ? participants.find((u) => u.id.user == client.info.me.user) : {};
 
       let isAdmin = isGroup ? user.isAdmin || user.isSuperAdmin : false;
