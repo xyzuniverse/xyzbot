@@ -5,6 +5,20 @@ module.exports = {
     if (!msg) return;
     let chats = await msg.getChat();
     let users = await msg.getContact();
+
+    // Auto clear chat if chats has reach the limit
+    try {
+      let chat_messages = await client.getChatById(chats.id._serialized);
+      let totalChat = await chat_messages.fetchMessages().length;
+      if (totalChat > 200) {
+        // If the chat reach the limit, you can change more or less than this
+        logger.info(`Chat ${chats.id._serialized} has reached the limit, clearing messages.`);
+        chats.clearMessages();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
     try {
       // Database
       try {
