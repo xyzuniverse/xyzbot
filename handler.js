@@ -8,7 +8,7 @@ module.exports = {
 
     const Tnow = (new Date() / 1000).toFixed(0);
     const msgTime = Tnow - msg.messageTimestamp;
-    if (msgTime > 5000) return this.logger.info(`message ${Intervalmsg} ago has been skipped to prevent logspam.`);
+    if (msgTime > 5000) return this.logger.info(`message 5 sec ago has been skipped to prevent logspam.`);
 
     try {
       // Database
