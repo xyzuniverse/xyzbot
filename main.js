@@ -16,6 +16,7 @@ const logger = require("pino")({
     },
   },
 }).child({ creator: "xyzuniverse" });
+const cron = require("node-cron");
 
 // Prevent to crash if error occured
 process.on("uncaughtException", console.error);
@@ -143,6 +144,11 @@ setInterval(async () => {
 // Readline
 rl.on("line", (line) => {
   process.send(line.trim());
+});
+
+// Schedule for rebooting the bot
+cron.schedule("0 0 * * *", () => {
+  process.send("reset");
 });
 
 ClientConnect().catch((e) => console.error(e));
