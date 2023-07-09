@@ -92,6 +92,9 @@ async function ClientConnect() {
     },
   });
 
+  // Bind logger into client
+  client.logger = logger;
+
   // Webloading event
   client.on("loading_screen", (percent) => {
     logger.info(`Connecting, loading web... Status: ${percent}%`);

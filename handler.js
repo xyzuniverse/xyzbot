@@ -12,7 +12,7 @@ module.exports = {
       let totalChat = await chat_messages.fetchMessages();
       if (totalChat.length > 200) {
         // If the chat reach the limit, you can change more or less than this
-        logger.info(`Chat ${chats.id._serialized} has reached the limit, clearing messages.`);
+        client.logger.info(`Chat ${chats.id._serialized} has reached the limit, clearing messages.`);
         chats.clearMessages();
       }
     } catch (e) {
