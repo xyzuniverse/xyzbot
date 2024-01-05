@@ -1,4 +1,4 @@
-const { GenshinImpact, HonkaiStarRail, GamesEnum, REDEEM_CLAIM_API } = require("hoyoapi");
+const { GenshinImpact, HonkaiStarRail, GamesEnum, REDEEM_CLAIM_API } = require("@rexprjkt/hoyoapi");
 
 let handler = async (msg, { command, text }) => {
   if (!text) return msg.reply("Masukkan kode redeem!");

@@ -1,4 +1,4 @@
-const { GenshinImpact, HonkaiStarRail, GamesEnum, HonkaiImpact } = require("hoyoapi");
+const { GenshinImpact, HonkaiStarRail, GamesEnum, HonkaiImpact } = require("@rexprjkt/hoyoapi");
 
 let handler = async (msg, { command }) => {
   let user = global.db.data.users[msg.author || msg.from];

@@ -1,4 +1,4 @@
-const { GenshinImpact, HonkaiStarRail, GamesEnum } = require("hoyoapi");
+const { GenshinImpact, HonkaiStarRail, GamesEnum } = require("@rexprjkt/hoyoapi");
 
 let handler = async (msg, { command }) => {
   let user = global.db.data.users[msg.author || msg.from];
@@ -11,6 +11,7 @@ let handler = async (msg, { command }) => {
       if (!cookieToken) return msg.reply("Cookie token tidak ditemukan! Silahan generate cookie token di hoyolab website.\nTutorial coming soon.");
       let options = { cookie: user.hoyolab.cookieToken, lang: "id-id", uid: user.hoyolab[_game].uid };
       let game = command.split("gamerecord")[0] == "gi" ? new GenshinImpact(options) : new HonkaiStarRail(options);
+      console.log(game.request)
       result = await (await game.record.records()).stats;
     } catch (e) {
       console.error(e);

@@ -1,4 +1,4 @@
-const { Cookie, GamesEnum } = require("hoyoapi");
+const { Cookie, GamesEnum } = require("@rexprjkt/hoyoapi");
 const { hoyoverse } = require("../../lib/hoyolab-api.getuserinfo");
 
 let handler = async (msg, { text, command, usedPrefix }) => {

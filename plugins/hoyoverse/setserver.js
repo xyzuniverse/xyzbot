@@ -1,5 +1,5 @@
 const { hoyoverse } = require("../../lib/hoyolab-api.getuserinfo");
-const { GamesEnum, getHi3Region } = require("hoyoapi");
+const { GamesEnum, getHi3Region } = require("@rexprjkt/hoyoapi");
 
 let handler = async (msg, { client, args, text, command }) => {
   let user = global.db.data.users[msg.author || msg.from];
