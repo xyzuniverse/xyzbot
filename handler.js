@@ -30,13 +30,36 @@ module.exports = {
         let user = global.db.data.users[msg.author || msg.from];
         if (typeof user !== "object") global.db.data.users[msg.author || msg.from] = {};
         if (user) {
-          if (!("name" in user)) user.name = users.pushname;
+          if (!("name" in user)) {
+            user.name = users.pushname;
+            user.afk = -1;
+            user.afkReason = "";
+          } 
         } else
           global.db.data.users[msg.author || msg.from] = {
             name: users.pushname,
+            afk: -1,
+            afkReason: ""
           };
       } catch (e) {
         console.log("DatabaseError:", e);
+      }
+
+      // AFK
+      let afkUser = global.db.data.users[msg.author || msg.from]
+      if (afkUser.afk > -1) {
+        msg.reply(`Selamat datang kembali, ${afkUser.name}!\nAnda kembali ke chat setelah afk selama ${clockString(new Date - afkUser.afk)}.\nAlasan : ${afkUser.afkReason ? boldItalic(afkUser.afkReason) : ''}`)
+        afkUser.afk = -1
+        afkUser.afkReason = ''
+      }
+      let afkJids = [...new Set([...(msg.mentionedIds || []), ...(m.quoted ? [await (await msg.getQuotedMessage()).mentionedIds] : [])])]
+      for (let jid of afkJids) {
+        let users = global.db.data.users[jid._serialized]
+        if (!users) continue
+        let afkTime = users.afk
+        if (!afkTime || afkTime < 0) continue
+        let reason = users.afkReason || ''
+        m.reply(`Dia tidak ada untuk saat ini. (selama ${clockString(new Date - afkUser.afk)})\nAlasan : ${reason}`)
       }
 
       // Plugin midman (prevent users to running the plugins)
@@ -170,3 +193,20 @@ module.exports = {
     }
   },
 };
+
+function clockString(ms) {
+  let h = isNaN(ms) ? "--" : Math.floor(ms / 3600000);
+  let m = isNaN(ms) ? "--" : Math.floor(ms / 60000) % 60;
+  let s = isNaN(ms) ? "--" : Math.floor(ms / 1000) % 60;
+  return [h, m, s].map((v) => v.toString().padStart(2, 0)).join(":");
+}
+
+const bold = (string) => {
+  return '*' + string + '*';
+}
+const monospace = (string) => {
+  return '```' + string + '```'
+}
+const boldItalic = (string) => {
+  return '*_' + string + '_*'
+}
