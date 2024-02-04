@@ -54,12 +54,12 @@ let handler = async (msg, { client, text }) => {
         ]
     };
     msg.react("⏳");
-    const { data } = await axios.post("https://bot.lyo.su/quote/generate", request, {
+    const { data } = await axios.post("https://api.safone.dev/quotly", request, {
         headers: { 'Content-Type': 'application/json' }
     });
 
     if (data) {
-        var media = new MessageMedia('image/png', data.result.image, null);
+        var media = new MessageMedia('image/png', data.image, null);
         msg.react("✅");
         return msg.reply(media, null, { sendMediaAsSticker: true, stickerName: global.sticker.packname, stickerAuthor: global.sticker.author });
     } else {
