@@ -32,7 +32,11 @@ async function start() {
         try {
           const command = require(filePath);
           command.category = folder;
-          bot.commands.set(command.name, command);
+          bot.commands.set(command.name, command); // Set the main name
+
+          if (command.alias && Array.isArray(command.alias)) {
+            command.alias.forEach((alias) => bot.commands.set(alias, command)); // Set aliases
+          }
         } catch (error) {
           console.error(`Failed to load command from: ${filePath}:`, error);
         }
