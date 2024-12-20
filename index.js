@@ -31,12 +31,14 @@ async function start() {
         delete require.cache[require.resolve(filePath)];
         try {
           const command = require(filePath);
+          command.category = folder;
           bot.commands.set(command.name, command);
         } catch (error) {
           console.error(`Failed to load command from: ${filePath}:`, error);
         }
       }
     }
+    console.log(bot.commands);
     console.log(
       `All commands has been loaded. Total commands: ${bot.commands.size}`
     );
@@ -76,6 +78,7 @@ async function start() {
     const msg = Serializer.serializeMessage(bot, messages.messages[0]);
     console.log(JSON.stringify(msg, null, 2));
     if (!msg.message) return;
+    if (msg.key.fromMe) return;
 
     // Command handling
     const botPrefix = new RegExp(
