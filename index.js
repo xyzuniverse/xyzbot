@@ -75,13 +75,21 @@ async function start() {
   bot.ev.on("messages.upsert", (messages) => {
     const msg = Serializer.serializeMessage(bot, messages.messages[0]);
     console.log(JSON.stringify(msg, null, 2));
+    if (!msg.message) return;
 
     // Command handling
-    const botPrefix = "!";
-    if (!msg.message) return;
-    if (!msg.text.startsWith(botPrefix) || msg.key.fromMe) return;
+    const botPrefix = new RegExp(
+      "^[" +
+        "‎xzXZ/i!#$%+£¢€¥^°=¶∆×÷π√✓©®:;?&.\\-".replace(
+          /[|\\{}()[\]^$+*?.\-\^]/g,
+          "\\$&"
+        ) +
+        "]"
+    );
+    let usedPrefix = msg.text.match(botPrefix)?.[0];
+    if (!usedPrefix) return; // If no prefix is found, exit
 
-    const args = msg.text.slice(botPrefix.length).trim().split(/ +/);
+    const args = msg.text.slice(usedPrefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
 
     if (!bot.commands.has(commandName)) return;
