@@ -92,11 +92,18 @@ async function start() {
     const args = msg.text.slice(usedPrefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
 
-    if (!bot.commands.has(commandName)) return;
+    if (!bot.commands.has(commandName))
+      return msg.reply(
+        `Unknown command: ${commandName}\n... maybe try see ${usedPrefix}menu for check some commands list?`
+      );
     const command = bot.commands.get(commandName);
 
     try {
-      command.execute(msg, args, bot);
+      command.execute(msg, {
+        args,
+        bot,
+        usedPrefix,
+      });
     } catch (error) {
       console.error(error);
       bot.sendMessage(
