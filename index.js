@@ -98,6 +98,7 @@ async function start() {
 
     const args = msg.text.slice(usedPrefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
+    if (!commandName) return;
 
     if (!bot.commands.has(commandName))
       return msg.reply(
