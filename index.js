@@ -77,53 +77,6 @@ async function start() {
       }
     });
 
-  // Message event
-  bot.ev.on("messages.upsert", (messages) => {
-    const msg = Serializer.serializeMessage(bot, messages.messages[0]);
-    console.log(JSON.stringify(msg, null, 2));
-    if (!msg.message) return;
-    if (msg.key.fromMe) return;
-
-    // Command handling
-    const botPrefix = new RegExp(
-      "^[" +
-        "‎xzXZ/i!#$%+£¢€¥^°=¶∆×÷π√✓©®:;?&.\\-".replace(
-          /[|\\{}()[\]^$+*?.\-\^]/g,
-          "\\$&"
-        ) +
-        "]"
-    );
-    let usedPrefix = msg.text.match(botPrefix)?.[0];
-    if (!usedPrefix) return; // If no prefix is found, exit
-
-    const args = msg.text.slice(usedPrefix.length).trim().split(/ +/);
-    const commandName = args.shift().toLowerCase();
-    if (!commandName) return;
-
-    if (!bot.commands.has(commandName))
-      return msg.reply(
-        `Unknown command: ${commandName}\n... maybe try see ${usedPrefix}menu for check some commands list?`
-      );
-    const command = bot.commands.get(commandName);
-
-    try {
-      command.execute(msg, {
-        args,
-        bot,
-        usedPrefix,
-      });
-    } catch (error) {
-      console.error(error);
-      bot.sendMessage(
-        msg.key.remoteJid,
-        {
-          text: "There's some error while executing the command, please contact the owner to resolve this problem!",
-        },
-        { quoted: msg }
-      );
-    }
-  });
-
   return bot;
 }
 
