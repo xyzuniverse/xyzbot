@@ -78,6 +78,7 @@ module.exports = {
       usedPrefix,
       participants,
       groupMetadata,
+      args,
     };
     try {
       await command.execute.call(this, msg, extra);
