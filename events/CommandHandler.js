@@ -29,6 +29,10 @@ module.exports = {
     const command = this.commands.get(commandName);
 
     // Midman - prevent user to run command if the user doesn't have the permission
+    let isROwner = [this.user.id.split("@")[0], process.env.owner]
+      .map((v) => v?.replace(/[^0-9]/g, ""))
+      .includes(msg.sender.split("@")[0]);
+    let isOwner = isROwner || msg.key.fromMe;
     let groupMetadata = msg.isGroup ? await this.groupMetadata(msg.from) : {};
     let participants = msg.isGroup ? groupMetadata.participants : [];
 
@@ -62,6 +66,10 @@ module.exports = {
       return msg
         .react("⚠️")
         .then(() => msg.reply("This command can only executed in group chat!"));
+    } else if (command.owner && !isOwner) {
+      return msg
+        .react("⚠️")
+        .then(() => msg.reply("This command can only executed by the owner!"));
     }
 
     // Execute the command requested by user

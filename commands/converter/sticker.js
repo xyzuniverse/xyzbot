@@ -20,8 +20,12 @@ module.exports = {
         { reuploadRequest: bot.updateMediaMessage }
       );
       let sticker = new createSticker(buffer, {
-        pack: "xyzbot's stickers.",
-        author: "xyzuniverse - rexprjkt on github.",
+        pack: process.env.stickerPackname
+          ? process.env.stickerPackname
+          : "xyzbot's stickers.",
+        author: process.env.stickerAuthor
+          ? process.env.stickerAuthor
+          : "xyzuniverse - rexprjkt on github.",
         type: StickerTypes.FULL,
         quality: 50,
       });

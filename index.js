@@ -1,3 +1,4 @@
+require("dotenv").config();
 const client = require("./lib/client");
 const Serializer = require("./lib/Serializer");
 const Collection = require("./lib/CommandCollections");
@@ -75,6 +76,16 @@ async function start() {
         console.log(`File ${filePath} has been removed, reloading commands...`);
         loadCommands("commands");
       }
+    });
+
+  chokidar
+    .watch("./.env", {
+      persistent: true,
+      ignoreInitial: true,
+    })
+    .on("change", () => {
+      console.log("File .env has been changed, reloading configs...");
+      require("dotenv").config({ override: true });
     });
 
   return bot;
