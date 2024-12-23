@@ -1,7 +1,7 @@
 module.exports = {
   name: "menu",
   description: "Show the command list.",
-  execute: async (msg, { args, bot, usedPrefix }) => {
+  execute: async (msg, { bot, usedPrefix }) => {
     let categorizedCommands = {};
     for (const [commandName, commandData] of bot.commands) {
       const category = commandData.category;

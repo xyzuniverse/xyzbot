@@ -73,12 +73,14 @@ module.exports = {
     }
 
     // Execute the command requested by user
+    let extra = {
+      bot: this,
+      usedPrefix,
+      participants,
+      groupMetadata,
+    };
     try {
-      command.execute(msg, {
-        args,
-        bot: this,
-        usedPrefix,
-      });
+      await command.execute.call(this, msg, extra);
     } catch (error) {
       console.error(error);
       this.sendMessage(
