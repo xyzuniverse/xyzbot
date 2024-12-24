@@ -5,6 +5,7 @@ const Collection = require("./lib/CommandCollections");
 const fs = require("fs");
 const path = require("node:path");
 const chokidar = require("chokidar");
+const { DisconnectReason } = require("@whiskeysockets/baileys");
 
 // Prevent exit if it's closed
 process.on("uncaughtException", console.error);
@@ -87,6 +88,22 @@ async function start() {
       console.log("File .env has been changed, reloading configs...");
       require("dotenv").config({ override: true });
     });
+
+  bot.ev.on("connection.update", async (update) => {
+    const { connection, lastDisconnect } = update;
+    if (connection === "close") {
+      console.log("connection closed");
+      if (
+        lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
+      ) {
+        await start();
+      } else {
+        console.log("Connection closed. You are logged out.");
+      }
+    }
+
+    console.log("connection update", update);
+  });
 
   return bot;
 }
