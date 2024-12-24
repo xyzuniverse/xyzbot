@@ -9,7 +9,7 @@ module.exports = {
     // Command handling
     const botPrefix = new RegExp(
       "^[" +
-        "‎xzXZ/i!#$%+£¢€¥^°=¶∆×÷π√✓©®:;?&.\\-".replace(
+        "/i!#$%+£¢€¥^°=¶∆×÷π√✓©®:;?&.\\-".replace(
           /[|\\{}()[\]^$+*?.\-\^]/g,
           "\\$&"
         ) +
