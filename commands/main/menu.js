@@ -14,7 +14,8 @@ module.exports = {
       });
     }
 
-    let menuText = "/// COMMAND LIST ///\n\n";
+    let menuText = "";
+    menuText += `Hi, ${msg.pushName}👋\nHere's our menu list command bot.\n\n`;
     for (const category in categorizedCommands) {
       menuText += `\`${
         category.toString().charAt(0).toUpperCase() + category.slice(1)
