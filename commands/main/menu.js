@@ -16,9 +16,9 @@ module.exports = {
 
     let menuText = "/// COMMAND LIST ///\n\n";
     for (const category in categorizedCommands) {
-      menuText += `*${
+      menuText += `\`${
         category.toString().charAt(0).toUpperCase() + category.slice(1)
-      }*\n`;
+      }\`\n`;
       for (const command of categorizedCommands[category]) {
         menuText += `- \`\`\`${usedPrefix}${command.name}\`\`\`: ${command.description}\n`;
       }
