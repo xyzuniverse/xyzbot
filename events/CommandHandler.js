@@ -4,7 +4,7 @@ module.exports = {
     const msg = Serializer.serializeMessage(this, messages.messages[0]);
     if (!msg.message) return;
     if (msg.key.fromMe) return;
-    console.log(JSON.stringify(msg, null, 2));
+    // console.log(JSON.stringify(msg, null, 2));
 
     // Command handling
     const botPrefix = new RegExp(
