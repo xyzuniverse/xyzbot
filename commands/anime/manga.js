@@ -44,8 +44,7 @@ module.exports = {
       `;
 
       await bot.sendMessage(msg.key.remoteJid, {
-        text: mangaInfo,
-        caption: manga.title,
+        caption: mangaInfo.trim(),
         image: { url: manga.images.jpg.image_url },
       });
     } catch (error) {

@@ -43,9 +43,8 @@ module.exports = {
       `;
 
       await bot.sendMessage(msg.key.remoteJid, {
-        text: animeInfo,
-        caption: anime.title,
         image: { url: anime.images.jpg.image_url },
+        caption: animeInfo.trim(),
       });
     } catch (error) {
       console.error(error);
