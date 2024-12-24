@@ -13,6 +13,7 @@ module.exports = {
     const mangaName = args.join(" ");
 
     try {
+      msg.react("⏳");
       const response = await axios.get(
         `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(
           mangaName
@@ -21,9 +22,12 @@ module.exports = {
       const manga = response.data.data[0];
 
       if (!manga) {
-        return msg.reply("Sorry, I couldn't find any manga with that name.");
+        msg.react("⚠️").then(() => {
+          msg.reply("Sorry, I couldn't find any manga with that name.");
+        });
       }
 
+      msg.react("✅");
       const mangaInfo = `
 *Title*: ${manga.title}
 *English Title*: ${manga.title_english || "N/A"}
