@@ -6,6 +6,9 @@ module.exports = {
     if (msg.key.fromMe) return;
     // console.log(JSON.stringify(msg, null, 2));
 
+    // Database
+    require("./DatabaseHandler")(msg, this);
+
     // Command handling
     const botPrefix = new RegExp(
       "^[" +

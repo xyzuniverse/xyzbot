@@ -6,6 +6,7 @@ const fs = require("fs");
 const path = require("node:path");
 const chokidar = require("chokidar");
 const { DisconnectReason } = require("@whiskeysockets/baileys");
+const { Low, JSONFile } = require("./lib/lowdb");
 
 // Prevent exit if it's closed
 process.on("uncaughtException", console.error);
@@ -89,6 +90,18 @@ async function start() {
       require("dotenv").config({ override: true });
     });
 
+  // Database
+  bot.db = new Low(new JSONFile("./database.json"));
+
+  // Try to load database
+  if (bot.db.data === null) {
+    await bot.db.read();
+    bot.db.data = {
+      users: {},
+      groups: {},
+    };
+  }
+
   bot.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect } = update;
     if (connection === "close") {
@@ -101,11 +114,24 @@ async function start() {
         console.log("Connection closed. You are logged out.");
       }
     }
-
     console.log("connection update", update);
   });
 
   return bot;
 }
 
-start().catch(() => console.error);
+start().then(async (bot) => {
+  // Save database
+  if (bot.db.data) {
+    setInterval(async () => {
+      try {
+        await bot.db.write();
+      } catch {
+        fs.unlinkSync("./database.json.tmp"); // remove temporary database (sometimes throws this error tho)
+      }
+      if (fs.existsSync("./database.json.tmp")) {
+        fs.unlinkSync("./database.json.tmp"); // remove temporary database file for prevent error writing into database
+      }
+    }, 30 * 1000);
+  }
+});
