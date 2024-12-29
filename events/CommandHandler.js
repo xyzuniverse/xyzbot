@@ -1,7 +1,10 @@
 const Serializer = require("../lib/Serializer");
 module.exports = {
   async chatUpdate(messages) {
-    const msg = Serializer.serializeMessage(this, messages.messages[0]);
+    const msg = Serializer.serializeMessage(
+      this,
+      messages.messages[messages.messages.length - 1]
+    );
     if (!msg.message) return;
     if (msg.key.fromMe) return;
     // console.log(JSON.stringify(msg, null, 2));
