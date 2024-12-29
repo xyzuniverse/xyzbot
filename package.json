@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "@neoxr/quote-api": "^1.1.1-dev",
+    "@rexprjkt/hoyoapi": "^1.2.6",
     "@whiskeysockets/baileys": "github:whiskeysockets/baileys",
     "awesome-phonenumber": "^7.2.0",
     "axios": "^1.7.9",

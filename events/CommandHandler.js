@@ -118,6 +118,7 @@ module.exports = {
         participants,
         groupMetadata,
         args,
+        command: commandName,
       };
       try {
         await command.execute.call(this, msg, extra);
