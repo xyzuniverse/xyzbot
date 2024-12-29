@@ -10,8 +10,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@neoxr/quote-api": "^1.1.1-dev",
     "@whiskeysockets/baileys": "github:whiskeysockets/baileys",
+    "awesome-phonenumber": "^7.2.0",
     "axios": "^1.7.9",
+    "canvas": "^3.0.0",
     "chokidar": "^4.0.3",
     "dotenv": "^16.4.7",
     "fluent-ffmpeg": "^2.1.3",
