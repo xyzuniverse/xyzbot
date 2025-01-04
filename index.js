@@ -1,19 +1,100 @@
 require("dotenv").config();
-const client = require("./lib/client");
-const Serializer = require("./lib/Serializer");
 const Collection = require("./lib/CommandCollections");
 const fs = require("fs");
 const path = require("node:path");
 const chokidar = require("chokidar");
-const { DisconnectReason } = require("@whiskeysockets/baileys");
-const { Low, JSONFile } = require("./lib/lowdb");
+const {
+  default: makeWASocket,
+  DisconnectReason,
+  fetchLatestBaileysVersion,
+  makeCacheableSignalKeyStore,
+  proto,
+  useMultiFileAuthState,
+  makeInMemoryStore,
+} = require("@whiskeysockets/baileys");
+const Pino = require("pino");
+const NodeCache = require("node-cache");
+
+// external map to store retry counts of messages when decryption/encryption fails
+// keep this out of the socket itself, so as to prevent a message decryption/encryption loop across socket restarts
+const msgRetryCounterCache = new NodeCache();
+
+// LowDB
+var low;
+try {
+  low = require("lowdb");
+} catch {
+  low = require("./lib/lowdb");
+}
+const { Low, JSONFile } = low;
 
 // Prevent exit if it's closed
 process.on("uncaughtException", console.error);
 
 async function start() {
-  const sessionDir = "sessions"; // Change anything if u want
-  const bot = await client.connect(sessionDir);
+  // Client configuration
+  const { state, saveCreds } = await useMultiFileAuthState("sessions");
+  const { version } = await fetchLatestBaileysVersion();
+
+  // Client store
+  const store = makeInMemoryStore({ logger: Pino({ level: "silent" }) });
+  // can be read from a file
+  store.readFromFile("./client_store.json");
+  // saves the state to a file every 1minute
+  setInterval(() => {
+    store.writeToFile("./client_store.json");
+  }, 60_000);
+
+  // Cached metadata
+  const socketGCMCache = new Map();
+
+  // Deploy the client
+  const bot = makeWASocket({
+    version,
+    printQRInTerminal: true,
+    auth: {
+      creds: state.creds,
+      keys: makeCacheableSignalKeyStore(state.keys, Pino({ level: "silent" })),
+    },
+    msgRetryCounterCache: msgRetryCounterCache,
+    getMessage: async (msg) => {
+      if (store) {
+        const storedMsg = await store.loadMessage(msg.remoteJid, msg.id);
+        return storedMsg.message || undefined;
+      }
+      return proto.Message.fromObject({});
+    },
+    logger: Pino({ level: "silent" }),
+    cachedGroupMetadata: async (jid) => {
+      if (socketGCMCache.has(jid)) {
+        return socketGCMCache.get(jid);
+      }
+      try {
+        const sockGroupMetadata = await bot.groupMetadata(jid);
+        return socketGCMCache.set(jid, sockGroupMetadata), sockGroupMetadata;
+      } catch (e) {
+        return (
+          console.error("Failed to fetch metadata for group " + jid + ":", e),
+          null
+        );
+      }
+    },
+    syncFullHistory: false,
+    retryRequestDelayMs: 10,
+    transactionOpts: {
+      maxCommitRetries: 10,
+      delayBetweenTriesMs: 10,
+    },
+    maxMsgRetryCount: 15,
+    appStateMacVerification: {
+      patch: true,
+      snapshot: true,
+    },
+  });
+
+  // Bind the store
+  store.bind(bot.ev);
+  bot.store = store;
 
   // Command manager
   bot.commands = new Collection();
@@ -99,6 +180,7 @@ async function start() {
     bot.db.data = {
       users: {},
       groups: {},
+      ...(bot.db.data || {}),
     };
   }
 
@@ -115,6 +197,15 @@ async function start() {
       }
     }
     console.log("connection update", update);
+  });
+
+  bot.ev.on(
+    "messages.upsert",
+    require("./events/CommandHandler").chatUpdate.bind(bot)
+  );
+
+  bot.ev.on("creds.update", async () => {
+    await saveCreds();
   });
 
   return bot;
