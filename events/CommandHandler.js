@@ -1,4 +1,5 @@
 const Serializer = require("../lib/Serializer");
+const { getGroupMetadata } = require("../lib/CachedGroupMetadata");
 module.exports = {
   async chatUpdate(messages) {
     const msg = await Serializer.serializeMessage(
@@ -12,11 +13,23 @@ module.exports = {
     // Database
     require("./DatabaseHandler")(msg, this);
 
-    // Owner midman
+    // Midman - prevent user to run command if the user doesn't have the permission
     let isROwner = [this.user.id.split("@")[0], process.env.owner]
       .map((v) => v?.replace(/[^0-9]/g, ""))
       .includes(msg.sender.split("@")[0]);
     let isOwner = isROwner || msg.key.fromMe;
+    let groupMetadata = msg.isGroup
+      ? await getGroupMetadata(msg.from, this)
+      : {};
+    let participants = msg.isGroup ? groupMetadata.participants : [];
+    let user = msg.isGroup ? participants.find((u) => u.id == msg.author) : {};
+    let bot = msg.isGroup
+      ? participants.find((u) => u.id == Serializer.decodeJid(this.user.id))
+      : {};
+    let isAdmin = msg.isGroup
+      ? user?.admin == "admin" || user?.admin == "superadmin"
+      : false;
+    let isBotAdmin = msg.isGroup ? bot?.admin : false;
 
     // Eval - debugging
     const { exec } = require("child_process");
@@ -60,22 +73,6 @@ module.exports = {
           `Unknown command: ${commandName}\n... maybe try see ${usedPrefix}menu for check some commands list?`
         );
       const command = this.commands.get(commandName);
-
-      // User / Group midman - prevent user to run command if the user doesn't have the permission
-      let groupMetadata = msg.isGroup ? await this.groupMetadata(msg.from) : {}; // group metadata should placed into this for prevent spam metadata request
-      let participants = msg.isGroup ? groupMetadata.participants : [];
-
-      let user = msg.isGroup
-        ? participants.find((u) => u.id == msg.author)
-        : {};
-      let bot = msg.isGroup
-        ? participants.find((u) => u.id == Serializer.decodeJid(this.user.id))
-        : {};
-
-      let isAdmin = msg.isGroup
-        ? user?.admin == "admin" || user?.admin == "superadmin"
-        : false;
-      let isBotAdmin = msg.isGroup ? bot?.admin : false;
 
       if (command.admin && !isAdmin) {
         return msg

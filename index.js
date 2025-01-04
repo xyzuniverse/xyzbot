@@ -45,9 +45,6 @@ async function start() {
     store.writeToFile("./client_store.json");
   }, 60_000);
 
-  // Cached metadata
-  const socketGCMCache = new Map();
-
   // Deploy the client
   const bot = makeWASocket({
     version,
@@ -65,20 +62,6 @@ async function start() {
       return proto.Message.fromObject({});
     },
     logger: Pino({ level: "silent" }),
-    cachedGroupMetadata: async (jid) => {
-      if (socketGCMCache.has(jid)) {
-        return socketGCMCache.get(jid);
-      }
-      try {
-        const sockGroupMetadata = await bot.groupMetadata(jid);
-        return socketGCMCache.set(jid, sockGroupMetadata), sockGroupMetadata;
-      } catch (e) {
-        return (
-          console.error("Failed to fetch metadata for group " + jid + ":", e),
-          null
-        );
-      }
-    },
     syncFullHistory: false,
     retryRequestDelayMs: 10,
     transactionOpts: {
