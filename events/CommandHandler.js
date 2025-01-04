@@ -6,129 +6,140 @@ module.exports = {
       this,
       messages.messages[messages.messages.length - 1]
     );
-    if (!msg.message) return;
-    if (msg.key.fromMe) return;
-    console.log(JSON.stringify(msg, null, 2));
 
-    // Database
-    require("./DatabaseHandler")(msg, this);
+    try {
+      if (!msg.message) return;
+      if (msg.key.fromMe) return;
 
-    // Midman - prevent user to run command if the user doesn't have the permission
-    let isROwner = [this.user.id.split("@")[0], process.env.owner]
-      .map((v) => v?.replace(/[^0-9]/g, ""))
-      .includes(msg.sender.split("@")[0]);
-    let isOwner = isROwner || msg.key.fromMe;
-    let groupMetadata = msg.isGroup
-      ? await getGroupMetadata(msg.from, this)
-      : {};
-    let participants = msg.isGroup ? groupMetadata.participants : [];
-    let user = msg.isGroup ? participants.find((u) => u.id == msg.author) : {};
-    let bot = msg.isGroup
-      ? participants.find((u) => u.id == Serializer.decodeJid(this.user.id))
-      : {};
-    let isAdmin = msg.isGroup
-      ? user?.admin == "admin" || user?.admin == "superadmin"
-      : false;
-    let isBotAdmin = msg.isGroup ? bot?.admin : false;
+      // Database
+      require("./DatabaseHandler")(msg, this);
 
-    // Eval - debugging
-    const { exec } = require("child_process");
-    if (msg.text.startsWith("=> ") && isOwner) {
-      try {
-        let evaled = await eval(msg.text.slice(2));
-        if (typeof evaled !== "string")
-          evaled = require("util").inspect(evaled);
-        return msg.reply(evaled.toString());
-      } catch (error) {
-        return msg.reply(error.toString());
+      // Midman - prevent user to run command if the user doesn't have the permission
+      let isROwner = [this.user.id.split("@")[0], process.env.owner]
+        .map((v) => v?.replace(/[^0-9]/g, ""))
+        .includes(msg.sender.split("@")[0]);
+      let isOwner = isROwner || msg.key.fromMe;
+      let groupMetadata = msg.isGroup
+        ? await getGroupMetadata(msg.from, this)
+        : {};
+      let participants = msg.isGroup ? groupMetadata.participants : [];
+      let user = msg.isGroup
+        ? participants.find((u) => u.id == msg.author)
+        : {};
+      let bot = msg.isGroup
+        ? participants.find((u) => u.id == Serializer.decodeJid(this.user.id))
+        : {};
+      let isAdmin = msg.isGroup
+        ? user?.admin == "admin" || user?.admin == "superadmin"
+        : false;
+      let isBotAdmin = msg.isGroup ? bot?.admin : false;
+
+      // Eval - debugging
+      const { exec } = require("child_process");
+      if (msg.text.startsWith("=> ") && isOwner) {
+        try {
+          let evaled = await eval(msg.text.slice(2));
+          if (typeof evaled !== "string")
+            evaled = require("util").inspect(evaled);
+          return msg.reply(evaled.toString());
+        } catch (error) {
+          return msg.reply(error.toString());
+        }
+      } else if (msg.text.startsWith("$ ") && isOwner) {
+        msg.reply("Executing...").then((message) => {
+          setTimeout(() => {
+            exec(msg.text.slice(2), (err, stdout) => {
+              if (err) return message.edit(err);
+              if (stdout) return message.edit(stdout.toString());
+            });
+          }, 2000);
+        });
+      } else {
+        // Command handling
+        const botPrefix = new RegExp(
+          "^[" +
+            "/!#$%+£¢€¥^°=¶∆×÷π√✓©®:;?&.\\-".replace(
+              /[|\\{}()[\]^$+*?.\-\^]/g,
+              "\\$&"
+            ) +
+            "]"
+        );
+        let usedPrefix = msg.text.match(botPrefix)?.[0];
+        if (!usedPrefix) return; // If no prefix is found, exit
+
+        const args = msg.text.slice(usedPrefix.length).trim().split(/ +/);
+        const commandName = args.shift().toLowerCase();
+        if (!commandName) return;
+
+        if (!this.commands.has(commandName))
+          return msg.reply(
+            `Unknown command: ${commandName}\n... maybe try see ${usedPrefix}menu for check some commands list?`
+          );
+        const command = this.commands.get(commandName);
+        msg.isCommand = true;
+
+        if (command.admin && !isAdmin) {
+          return msg
+            .react("⚠️")
+            .then(() =>
+              msg.reply("This command can only executed by the admin!")
+            );
+        } else if (command.botAdmin && !isBotAdmin) {
+          return msg
+            .react("⚠️")
+            .then(() =>
+              msg.reply(
+                "Make sure the bot is admin before executing this command!"
+              )
+            );
+        } else if (msg.isGroup && command.private) {
+          return msg
+            .react("⚠️")
+            .then(() =>
+              msg.reply("This command can only executed in private chat!")
+            );
+        } else if (!msg.isGroup && command.group) {
+          return msg
+            .react("⚠️")
+            .then(() =>
+              msg.reply("This command can only executed in group chat!")
+            );
+        } else if (command.owner && !isOwner) {
+          return msg
+            .react("⚠️")
+            .then(() =>
+              msg.reply("This command can only executed by the owner!")
+            );
+        }
+
+        // Execute the command requested by user
+        let extra = {
+          bot: this,
+          usedPrefix,
+          participants,
+          groupMetadata,
+          args,
+          command: commandName,
+        };
+        try {
+          await command.execute.call(this, msg, extra);
+        } catch (error) {
+          console.error(error);
+          this.sendMessage(
+            msg.key.remoteJid,
+            {
+              text: "There's some error while executing the command, please contact the owner to resolve this problem!",
+            },
+            { quoted: msg }
+          );
+        }
       }
-    } else if (msg.text.startsWith("$ ") && isOwner) {
-      msg.reply("Executing...").then((message) => {
-        setTimeout(() => {
-          exec(msg.text.slice(2), (err, stdout) => {
-            if (err) return message.edit(err);
-            if (stdout) return message.edit(stdout.toString());
-          });
-        }, 2000);
-      });
-    } else {
-      // Command handling
-      const botPrefix = new RegExp(
-        "^[" +
-          "/!#$%+£¢€¥^°=¶∆×÷π√✓©®:;?&.\\-".replace(
-            /[|\\{}()[\]^$+*?.\-\^]/g,
-            "\\$&"
-          ) +
-          "]"
+    } finally {
+      require("../lib/print")(
+        this,
+        msg,
+        msg.isGroup ? getGroupMetadata(msg.from, this) : {}
       );
-      let usedPrefix = msg.text.match(botPrefix)?.[0];
-      if (!usedPrefix) return; // If no prefix is found, exit
-
-      const args = msg.text.slice(usedPrefix.length).trim().split(/ +/);
-      const commandName = args.shift().toLowerCase();
-      if (!commandName) return;
-
-      if (!this.commands.has(commandName))
-        return msg.reply(
-          `Unknown command: ${commandName}\n... maybe try see ${usedPrefix}menu for check some commands list?`
-        );
-      const command = this.commands.get(commandName);
-
-      if (command.admin && !isAdmin) {
-        return msg
-          .react("⚠️")
-          .then(() =>
-            msg.reply("This command can only executed by the admin!")
-          );
-      } else if (command.botAdmin && !isBotAdmin) {
-        return msg
-          .react("⚠️")
-          .then(() =>
-            msg.reply(
-              "Make sure the bot is admin before executing this command!"
-            )
-          );
-      } else if (msg.isGroup && command.private) {
-        return msg
-          .react("⚠️")
-          .then(() =>
-            msg.reply("This command can only executed in private chat!")
-          );
-      } else if (!msg.isGroup && command.group) {
-        return msg
-          .react("⚠️")
-          .then(() =>
-            msg.reply("This command can only executed in group chat!")
-          );
-      } else if (command.owner && !isOwner) {
-        return msg
-          .react("⚠️")
-          .then(() =>
-            msg.reply("This command can only executed by the owner!")
-          );
-      }
-
-      // Execute the command requested by user
-      let extra = {
-        bot: this,
-        usedPrefix,
-        participants,
-        groupMetadata,
-        args,
-        command: commandName,
-      };
-      try {
-        await command.execute.call(this, msg, extra);
-      } catch (error) {
-        console.error(error);
-        this.sendMessage(
-          msg.key.remoteJid,
-          {
-            text: "There's some error while executing the command, please contact the owner to resolve this problem!",
-          },
-          { quoted: msg }
-        );
-      }
     }
   },
 };

@@ -16,6 +16,7 @@
     "awesome-phonenumber": "^7.2.0",
     "axios": "^1.7.9",
     "canvas": "^3.0.0",
+    "chalk": "^4.1.1",
     "chokidar": "^4.0.3",
     "dotenv": "^16.4.7",
     "fluent-ffmpeg": "^2.1.3",
