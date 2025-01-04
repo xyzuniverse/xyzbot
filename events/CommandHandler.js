@@ -1,13 +1,13 @@
 const Serializer = require("../lib/Serializer");
 module.exports = {
   async chatUpdate(messages) {
-    const msg = Serializer.serializeMessage(
+    const msg = await Serializer.serializeMessage(
       this,
       messages.messages[messages.messages.length - 1]
     );
     if (!msg.message) return;
     if (msg.key.fromMe) return;
-    // console.log(JSON.stringify(msg, null, 2));
+    console.log(JSON.stringify(msg, null, 2));
 
     // Database
     require("./DatabaseHandler")(msg, this);
