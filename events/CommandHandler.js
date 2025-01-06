@@ -138,7 +138,7 @@ module.exports = {
       require("../lib/print")(
         this,
         msg,
-        msg.isGroup ? getGroupMetadata(msg.from, this) : {}
+        msg.isGroup ? await getGroupMetadata(msg.from, this) : {}
       );
     }
   },
