@@ -10,10 +10,10 @@ module.exports = {
   alias: ["hsrredeemcode"],
   description: "Claim redeem code on your hoyoverse games.",
 
-  execute: async (msg, { command, args }) => {
+  execute: async (msg, { command, args, bot }) => {
     let text = args.join(" ");
     if (!text) return msg.reply("Enter the redeem code!");
-    let user = global.db.data.users[msg.sender || msg.from];
+    let user = bot.db.data.users[msg.sender || msg.from];
     if (!user?.hoyolab?.cookieToken)
       return msg.reply(
         "Cookie token not found! Please generate it from hoyoverse website.\nTutorial coming soon."
