@@ -70,11 +70,6 @@ module.exports = {
         const args = msg.text.slice(usedPrefix.length).trim().split(/ +/);
         const commandName = args.shift().toLowerCase();
         if (!commandName) return;
-
-        if (!this.commands.has(commandName))
-          return msg.reply(
-            `Unknown command: ${commandName}\n... maybe try see ${usedPrefix}menu for check some commands list?`
-          );
         const command = this.commands.get(commandName);
         msg.isCommand = true;
 
