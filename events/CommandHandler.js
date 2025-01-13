@@ -2,10 +2,7 @@ const Serializer = require("../lib/Serializer");
 const { getGroupMetadata } = require("../lib/CachedGroupMetadata");
 module.exports = {
   async chatUpdate(messages) {
-    const msg = await Serializer.serializeMessage(
-      this,
-      messages.messages[messages.messages.length - 1]
-    );
+    const msg = await Serializer.serializeMessage(this, messages.messages[0]);
 
     try {
       if (!msg.message) return;
