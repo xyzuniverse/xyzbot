@@ -67,6 +67,7 @@ module.exports = {
         const args = msg.text.slice(usedPrefix.length).trim().split(/ +/);
         const commandName = args.shift().toLowerCase();
         if (!commandName) return;
+        if (!this.commands.has(commandName)) return;
         const command = this.commands.get(commandName);
         msg.isCommand = true;
 
