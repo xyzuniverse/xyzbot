@@ -1,15 +1,12 @@
-const {
-  downloadMediaMessage,
-  getContentType,
-} = require("@whiskeysockets/baileys");
+const { downloadMediaMessage } = require("@whiskeysockets/baileys");
 module.exports = {
   name: "readviewonce",
   alias: ["rvo"],
   description: "Read a view once image/video.",
   execute: async (msg, { bot, args }) => {
-    let isQMedia = /image|video/i.test(getContentType(msg.quoted.message));
+    let isQMedia = /image|video/i.test(msg.quoted.type);
     if (msg.quoted && isQMedia) {
-      if (!msg.quoted.message[getContentType(msg.quoted.message)].viewOnce) {
+      if (!msg.quoted.content.viewOnce) {
         return msg
           .react("⚠️")
           .then(() => msg.reply("This is not a view once message!"));
