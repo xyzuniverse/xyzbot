@@ -4,7 +4,7 @@ module.exports = {
   alias: ["char"],
   description: "Get character builds (HSR/Genshin)",
   execute: async (msg, { bot, args }) => {
-    let text = args.join();
+    let text = args.join(" ");
     msg.react("⚡");
     if (!text) return msg.reply("Insert the character?");
     switch (text) {
@@ -47,6 +47,29 @@ module.exports = {
           image: fs.readFileSync("./lib/chars/march_imaginary.jpg"),
           caption: process.env.stickerAuthor,
         });
+        break;
+      case "traveler pyro":
+      case "pyro traveler":
+        await msg.reply({
+          image: fs.readFileSync("./lib/chars/pyrotraveller.jpg"),
+          caption: process.env.stickerAuthor,
+        });
+        break;
+      case "mavuika":
+      case "mavuika main":
+      case "mavuika main dps":
+        await msg.reply({
+          image: fs.readFileSync("./lib/chars/mavuika.jpg"),
+          caption: process.env.stickerAuthor,
+        });
+        break;
+      case "mavuika sub":
+      case "mavuika sub dps":
+        await msg.reply({
+          image: fs.readFileSync("./lib/chars/mavuika_sub_dps.jpg"),
+          caption: process.env.stickerAuthor,
+        });
+        break;    
       default:
         try {
           await msg.reply({
