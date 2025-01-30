@@ -6,7 +6,7 @@ module.exports = {
 
     try {
       if (!msg.message) return;
-      if (msg.key.fromMe) return;
+      if (msg.isBaileys) return;
 
       // Database
       require("./DatabaseHandler")(msg, this);
@@ -40,6 +40,7 @@ module.exports = {
             evaled = require("util").inspect(evaled);
           return msg.reply(evaled.toString());
         } catch (error) {
+          console.log(error);
           return msg.reply(error.toString());
         }
       } else if (msg.text.startsWith("$ ") && isOwner) {
