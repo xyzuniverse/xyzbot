@@ -1,3 +1,4 @@
+const isNumber = x => typeof x === 'number' && !isNaN(x)
 module.exports = (msg, bot) => {
   let { data: database } = bot.db;
 
@@ -6,9 +7,13 @@ module.exports = (msg, bot) => {
   if (typeof user !== "object") database.users[msg.sender];
   if (user) {
     if (!("name" in user)) user.name = msg.pushName;
+    if (!isNumber(user.afk)) user.afk = -1
+    if (!('afkReason' in user)) user.afkReason = ''
   } else
     database.users[msg.sender] = {
       name: msg.pushName,
+      afk: -1,
+      afkReason: ""
     };
 
   // Group

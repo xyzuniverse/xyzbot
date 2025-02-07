@@ -11,6 +11,9 @@ module.exports = {
       // Database
       require("./DatabaseHandler")(msg, this);
 
+      // AFK
+      require("./AFKHandler")(msg, this);
+
       // Midman - prevent user to run command if the user doesn't have the permission
       let isROwner = [this.user.id.split("@")[0], process.env.owner]
         .map((v) => v?.replace(/[^0-9]/g, ""))
