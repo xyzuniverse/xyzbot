@@ -90,9 +90,7 @@ async function start() {
 
     for (const folder of commandFolders) {
       const folderPath = path.join(commandsPath, folder);
-      const commandFiles = fs
-        .readdirSync(folderPath)
-        .filter((file) => file.endsWith(".js"));
+      const commandFiles = fs.readdirSync(folderPath).filter((file) => file.endsWith(".js"));
       for (const file of commandFiles) {
         const filePath = path.join(folderPath, file);
         delete require.cache[require.resolve(filePath)];
@@ -110,9 +108,7 @@ async function start() {
       }
     }
     console.log(bot.commands);
-    console.log(
-      `All commands has been loaded. Total commands: ${bot.commands.size}`
-    );
+    console.log(`All commands has been loaded. Total commands: ${bot.commands.size}`);
   };
 
   loadCommands("commands");
@@ -171,9 +167,7 @@ async function start() {
     const { connection, lastDisconnect } = update;
     if (connection === "close") {
       console.log("connection closed");
-      if (
-        lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
-      ) {
+      if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
         await start();
       } else {
         console.log("Connection closed. You are logged out.");
@@ -182,19 +176,12 @@ async function start() {
     console.log("connection update", update);
   });
 
-  bot.ev.on(
-    "messages.upsert",
-    require("./events/CommandHandler").chatUpdate.bind(bot)
-  );
+  bot.ev.on("messages.upsert", require("./events/CommandHandler").chatUpdate.bind(bot));
 
   bot.ev.on("creds.update", async () => {
     await saveCreds();
   });
 
-  return bot;
-}
-
-start().then(async (bot) => {
   // Save database
   if (bot.db.data) {
     setInterval(async () => {
@@ -208,4 +195,8 @@ start().then(async (bot) => {
       }
     }, 30 * 1000);
   }
-});
+
+  return bot;
+}
+
+start().catch(console.error);
