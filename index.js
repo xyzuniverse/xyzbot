@@ -172,6 +172,20 @@ async function start() {
       } else {
         console.log("Connection closed. You are logged out.");
       }
+    } else if (connection === "open") {
+      // Save database
+      if (bot.db.data) {
+        setInterval(async () => {
+          try {
+            await bot.db.write();
+          } catch {
+            fs.unlinkSync("./database.json.tmp"); // remove temporary database (sometimes throws this error tho)
+          }
+          if (fs.existsSync("./database.json.tmp")) {
+            fs.unlinkSync("./database.json.tmp"); // remove temporary database file for prevent error writing into database
+          }
+        }, 30 * 1000);
+      }
     }
     console.log("connection update", update);
   });
@@ -181,20 +195,6 @@ async function start() {
   bot.ev.on("creds.update", async () => {
     await saveCreds();
   });
-
-  // Save database
-  if (bot.db.data) {
-    setInterval(async () => {
-      try {
-        await bot.db.write();
-      } catch {
-        fs.unlinkSync("./database.json.tmp"); // remove temporary database (sometimes throws this error tho)
-      }
-      if (fs.existsSync("./database.json.tmp")) {
-        fs.unlinkSync("./database.json.tmp"); // remove temporary database file for prevent error writing into database
-      }
-    }, 30 * 1000);
-  }
 
   return bot;
 }
