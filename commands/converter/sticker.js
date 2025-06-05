@@ -1,8 +1,6 @@
-const {
-  Sticker: createSticker,
-  StickerTypes,
-} = require("wa-sticker-formatter");
+const { Sticker, StickerTypes } = require("wa-sticker-formatter");
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
+const { createStickerFromVideo } = require("../../lib/sticker"); // ← tambahkan ini
 
 module.exports = {
   name: "sticker",
@@ -11,36 +9,41 @@ module.exports = {
   execute: async (msg, { args, bot }) => {
     let q = msg.quoted ? msg.quoted : msg;
     let isMedia = ["image", "video"].includes(q.type.replace(/message$/i, ""));
-    if (isMedia) {
-      msg.react("⏳");
-      let buffer = await downloadMediaMessage(
+    if (!isMedia) return msg.reply("Reply media dengan .s");
+
+    msg.react("⏳");
+    try {
+      const buffer = await downloadMediaMessage(
         q,
         "buffer",
         {},
         { reuploadRequest: bot.updateMediaMessage }
       );
-      let sticker = new createSticker(buffer, {
-        pack: process.env.stickerPackname
-          ? process.env.stickerPackname
-          : "xyzbot's stickers.",
-        author: process.env.stickerAuthor
-          ? process.env.stickerAuthor
-          : "xyzuniverse - rexprjkt on github.",
-        type: StickerTypes.FULL,
-        quality: 50,
-      });
-      if (sticker) {
-        msg.react("✅");
-        return msg.reply(await sticker.toMessage());
+
+      let sticker;
+      if (q.type.includes("video")) {
+        // gunakan konversi video dengan potong durasi dan kompresi
+        sticker = await createStickerFromVideo(buffer, {
+          pack: process.env.stickerPackname,
+          author: process.env.stickerAuthor,
+        });
       } else {
-        msg.react("⚠️");
-        return msg.reply(
-          "Conversion failed, please contact owner to resolve this issue."
-        );
+        // konversi gambar seperti biasa
+        sticker = new Sticker(buffer, {
+          pack: process.env.stickerPackname || "xyzbot",
+          author: process.env.stickerAuthor || "xyzuniverse",
+          type: StickerTypes.FULL,
+          quality: 50,
+        });
       }
-    } else
-      return msg.reply(
-        "Reply/include a media message then execute this command."
-      );
+
+      msg.react("✅");
+      return msg.reply(await sticker.toMessage());
+
+    } catch (e) {
+      console.error(e);
+      msg.react("⚠️");
+      return msg.reply("Gagal mengonversi media.");
+    }
   },
 };
