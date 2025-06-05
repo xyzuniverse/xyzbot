@@ -1,6 +1,6 @@
 const { Sticker, StickerTypes } = require("wa-sticker-formatter");
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
-const { createStickerFromVideo } = require("../../lib/sticker"); // ← tambahkan ini
+const { createStickerFromVideo } = require("../../lib/sticker");
 
 module.exports = {
   name: "sticker",
@@ -22,13 +22,13 @@ module.exports = {
 
       let sticker;
       if (q.type.includes("video")) {
-        // gunakan konversi video dengan potong durasi dan kompresi
+        
         sticker = await createStickerFromVideo(buffer, {
           pack: process.env.stickerPackname,
           author: process.env.stickerAuthor,
         });
       } else {
-        // konversi gambar seperti biasa
+        
         sticker = new Sticker(buffer, {
           pack: process.env.stickerPackname || "xyzbot",
           author: process.env.stickerAuthor || "xyzuniverse",
