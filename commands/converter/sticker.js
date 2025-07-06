@@ -1,34 +1,47 @@
 const { Sticker, StickerTypes } = require("wa-sticker-formatter");
-const { downloadMediaMessage } = require("@whiskeysockets/baileys");
+const { downloadContentFromMessage } = require("@whiskeysockets/baileys");
 const { createStickerFromVideo } = require("../../lib/sticker");
+
+async function getMediaBuffer(msg) {
+  const type = Object.keys(msg.message || {})[0];
+  const stream = await downloadContentFromMessage(msg.message[type],
+    type.includes("video") ? "video" :
+    type.includes("image") ? "image" : "document"
+  );
+  const chunks = [];
+  for await (let chunk of stream) chunks.push(chunk);
+  return Buffer.concat(chunks);
+}
 
 module.exports = {
   name: "sticker",
   alias: ["s"],
-  description: "Convert image/video message into sticker.",
+  description: "Convert image/video (including document) to sticker.",
   execute: async (msg, { args, bot }) => {
-    let q = msg.quoted ? msg.quoted : msg;
-    let isMedia = ["image", "video"].includes(q.type.replace(/message$/i, ""));
-    if (!isMedia) return msg.reply("Reply media dengan .s");
+    const q = msg.quoted ? msg.quoted : msg;
+    const type = Object.keys(q.message || {})[0];
+    const mimetype = q.message?.[type]?.mimetype || "";
+
+    const isImage = mimetype.startsWith("image/");
+    const isVideo = mimetype.startsWith("video/");
+    const isMedia = isImage || isVideo;
+
+    if (!isMedia) {
+      return msg.reply("❌ Kirim atau reply gambar/video, termasuk yang dikirim sebagai dokumen, lalu ketik .s");
+    }
 
     msg.react("⏳");
+
     try {
-      const buffer = await downloadMediaMessage(
-        q,
-        "buffer",
-        {},
-        { reuploadRequest: bot.updateMediaMessage }
-      );
+      const buffer = await getMediaBuffer(q);
 
       let sticker;
-      if (q.type.includes("video")) {
-        
+      if (isVideo) {
         sticker = await createStickerFromVideo(buffer, {
-          pack: process.env.stickerPackname,
-          author: process.env.stickerAuthor,
+          pack: process.env.stickerPackname || "xyzbot",
+          author: process.env.stickerAuthor || "xyzuniverse"
         });
       } else {
-        
         sticker = new Sticker(buffer, {
           pack: process.env.stickerPackname || "xyzbot",
           author: process.env.stickerAuthor || "xyzuniverse",
@@ -40,10 +53,10 @@ module.exports = {
       msg.react("✅");
       return msg.reply(await sticker.toMessage());
 
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error("Sticker conversion error:", err);
       msg.react("⚠️");
-      return msg.reply("Gagal mengonversi media.");
+      return msg.reply("❌ Gagal mengonversi media. Pastikan kamu mengirim media yang valid.");
     }
   },
 };
