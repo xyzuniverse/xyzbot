@@ -28,7 +28,7 @@ module.exports = {
       }
 
       const filename = `sticker_${Date.now()}.png`;
-      const filepath = path.join("/tmp", filename);
+      const filepath = path.join(__dirname, "../../temp", filename);
 
       await fs.writeFile(filepath, buffer);
 
@@ -42,7 +42,7 @@ module.exports = {
     } catch (error) {
       console.error("Error:", error);
       msg.react("⚠️");
-      return msg.reply("Terjadi kesalahan saat memproses stiker.");
+      return msg.reply("Terjadi kesalahan saat memproses stiker: " + error);
     }
   },
 };

@@ -68,7 +68,7 @@ module.exports = {
           : "xyzbot's stickers.",
         author: process.env.stickerAuthor
           ? process.env.stickerAuthor
-          : "xyzuniverse - rexprjkt on github.",
+          : "xyzuniverse - modified by 『∂αуℓιgнт』.",
         type: StickerTypes.FULL,
         quality: 50,
       });
