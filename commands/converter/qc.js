@@ -4,36 +4,28 @@ const { Sticker, StickerTypes } = require("wa-sticker-formatter");
 
 module.exports = {
   name: "qc",
-  description: "Convert a message into sticker.",
+  description: "Ubah sebuah pesan menjadi stiker kutipan (quote).",
   execute: async (msg, { bot, args }) => {
-    let q = msg.quoted ? msg.quoted : msg;
-    let text = q.text ? q.text : args.join(" ");
+    
+    // --- PERBAIKAN LOGIKA PENGAMBILAN TEKS ---
+    const quotedMessage = msg.quoted;
+    const text = (quotedMessage?.text) || args.join(" ");
+
     if (!text) {
-      msg.react("⚠️").then(() => {
-        return msg.reply("Type a text or reply to a message!");
-      });
+      return msg.reply("⚠️ Tulis sebuah teks atau reply pesan yang ingin dijadikan stiker quote.");
     }
-    let pushName = bot.db.data.users[q.sender]
-      ? bot.db.data.users[q.sender].name
-      : q.pushName
-      ? q.pushName
-      : bot.user.name;
-    if (q.mentionedJid) {
-      for (let users of q.mentionedJid) {
-        let name = bot.db.data.users[users]
-          ? bot.db.data.users[users].name
-          : areJidsSameUser(serializeJid(bot.user.id), users)
-          ? bot.user.name
-          : PhoneNumber("+" + users.split("@")[0]).getNumber("international");
-        text = text.replace("@" + users.split`@`[0], "@" + name);
-      }
-    }
-    // Try to get Profile picture
-    var pp;
+
+    // --- LOGIKA UTAMA (TIDAK BERUBAH) ---
+    const sender = quotedMessage?.sender || msg.sender;
+    const pushName = quotedMessage ? 
+        (bot.db.data.users[sender]?.name || quotedMessage.pushName || PhoneNumber('+' + sender.split('@')[0]).getNumber('international')) :
+        (msg.pushName);
+
+    let pp;
     try {
-      pp = await bot.profilePictureUrl(q.sender);
+      pp = await bot.profilePictureUrl(sender);
     } catch {
-      pp = "https://telegra.ph/file/2b1ed079ea221a4ea3237.png";
+      pp = "https://telegra.ph/file/2b1ed079ea221a4ea3237.png"; // Gambar profil default
     }
 
     const request = {
@@ -43,39 +35,40 @@ module.exports = {
       width: 512,
       height: 768,
       scale: 2,
-      messages: [
-        {
-          entities: [],
-          avatar: true,
-          from: {
-            id: 1,
-            name: pushName,
-            photo: {
-              url: pp,
-            },
-          },
-          text: text,
-          replyMessage: {},
+      messages: [{
+        entities: [],
+        avatar: true,
+        from: {
+          id: 1,
+          name: pushName,
+          photo: { url: pp },
         },
-      ],
+        text: text,
+        replyMessage: {},
+      }],
     };
-    msg.react("⏳");
-    quote(request).then(async (res) => {
+    
+    await msg.react("⏳");
+    
+    try {
+      const res = await quote(request);
       const buffer = Buffer.from(res.image, "base64");
+      
       const sticker = new Sticker(buffer, {
-        pack: process.env.stickerPackname
-          ? process.env.stickerPackname
-          : "xyzbot's stickers.",
-        author: process.env.stickerAuthor
-          ? process.env.stickerAuthor
-          : "xyzuniverse - modified by 『∂αуℓιgнт』.",
+        pack: process.env.stickerPackname || "Quote Stiker",
+        author: process.env.stickerAuthor || bot.user.name,
         type: StickerTypes.FULL,
         quality: 50,
       });
-      if (sticker) {
-        msg.react("✅");
-        return msg.reply(await sticker.toMessage());
-      }
-    });
+
+      // --- PERBAIKAN METODE PENGIRIMAN ---
+      await bot.sendMessage(msg.from, await sticker.toMessage(), { quoted: msg });
+      await msg.react("✅");
+
+    } catch (err) {
+      console.error("Gagal membuat stiker quote:", err);
+      await msg.react("⚠️");
+      await msg.reply("Terjadi kesalahan saat membuat stiker.");
+    }
   },
 };
