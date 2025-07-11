@@ -94,7 +94,7 @@ async function start() {
       }
       return proto.Message.fromObject({});
     },
-    logger: Pino({ level: "silent" }),
+    logger: Pino({ level: "info" }),
     syncFullHistory: false
   });
 
