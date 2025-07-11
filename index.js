@@ -7,6 +7,7 @@ const chokidar = require("chokidar");
 // --- FUNGSI UNTUK MEMUAT JADWAL SHOLAT SAAT STARTUP ---
 const cron = require('node-cron');
 const axios = require('axios');
+const qrcode = require('qrcode-terminal');
 
 // Impor fungsi yang benar dari sholat.js
 const { getPrayerTimes, schedulePrayerNotifications } = require('./commands/islamic/sholat.js').internalFunctions || {};
