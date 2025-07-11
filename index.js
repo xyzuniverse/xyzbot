@@ -76,7 +76,7 @@ async function start() {
   const { version } = await fetchLatestBaileysVersion();
 
   // Gunakan Store Kustom kita di sini
-  const store = createCustomStore({ logger: Pino({ level: "info" }) });
+  const store = createCustomStore({ logger: Pino({ level: "silent" }) });
 
   const bot = makeWASocket({
     version,
