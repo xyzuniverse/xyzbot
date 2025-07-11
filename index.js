@@ -12,33 +12,33 @@ const axios = require('axios');
 const { getPrayerTimes, schedulePrayerNotifications } = require('./commands/islamic/sholat.js').internalFunctions || {};
 
 async function initializeSchedules(bot) {
-    // Pastikan fungsi berhasil diimpor sebelum melanjutkan
-    if (typeof getPrayerTimes !== 'function' || typeof schedulePrayerNotifications !== 'function') {
-        console.log("Fungsi internal sholat tidak ditemukan, penjadwalan startup dilewati.");
-        return;
-    }
+  // Pastikan fungsi berhasil diimpor sebelum melanjutkan
+  if (typeof getPrayerTimes !== 'function' || typeof schedulePrayerNotifications !== 'function') {
+    console.log("Fungsi internal sholat tidak ditemukan, penjadwalan startup dilewati.");
+    return;
+  }
 
-    console.log("Memuat dan menginisialisasi jadwal sholat dari database...");
-    if (!bot.db.data || !bot.db.data.groups) {
-        console.log("Database atau data grup tidak ditemukan, penjadwalan dilewati.");
-        return;
-    }
+  console.log("Memuat dan menginisialisasi jadwal sholat dari database...");
+  if (!bot.db.data || !bot.db.data.groups) {
+    console.log("Database atau data grup tidak ditemukan, penjadwalan dilewati.");
+    return;
+  }
 
-    const groups = bot.db.data.groups;
-    for (const groupId in groups) {
-        if (groups[groupId].sholat_city_id) {
-            const cityId = groups[groupId].sholat_city_id;
-            try {
-                const prayerTimes = await getPrayerTimes(cityId);
-                if (prayerTimes) {
-                    // Panggil fungsi yang diimpor dan pastikan semua parameter dikirim
-                    schedulePrayerNotifications(bot, groupId, prayerTimes, cityId);
-                }
-            } catch (e) {
-                console.error(`Gagal memuat jadwal untuk grup ${groupId} (ID: ${cityId}):`, e.message);
-            }
+  const groups = bot.db.data.groups;
+  for (const groupId in groups) {
+    if (groups[groupId].sholat_city_id) {
+      const cityId = groups[groupId].sholat_city_id;
+      try {
+        const prayerTimes = await getPrayerTimes(cityId);
+        if (prayerTimes) {
+          // Panggil fungsi yang diimpor dan pastikan semua parameter dikirim
+          schedulePrayerNotifications(bot, groupId, prayerTimes, cityId);
         }
+      } catch (e) {
+        console.error(`Gagal memuat jadwal untuk grup ${groupId} (ID: ${cityId}):`, e.message);
+      }
     }
+  }
 }
 
 // Impor Baileys tanpa makeInMemoryStore
@@ -80,7 +80,7 @@ async function start() {
 
   const bot = makeWASocket({
     version,
-    printQRInTerminal: true,
+    printQRInTerminal: false,
     auth: {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, Pino({ level: "silent" })),
@@ -111,13 +111,20 @@ async function start() {
   bot.db = new Low(new JSONFile("./database.json"));
   await bot.db.read();
   bot.db.data = bot.db.data || { users: {}, groups: {} };
-  
+
   setInterval(() => {
     bot.db.write().catch(console.error);
   }, 30 * 1000);
 
   bot.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect } = update;
+    const { connection, lastDisconnect, qr } = update;
+
+    // Jika ada QR code, tampilkan di terminal
+    if (qr) {
+      console.log("Pindai QR code ini untuk terhubung:");
+      qrcode.generate(qr, { small: true });
+    }
+
     if (connection === "close") {
       const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
       console.log(`Koneksi ditutup karena: ${lastDisconnect.error}, menyambung ulang: ${shouldReconnect}`);
@@ -126,8 +133,8 @@ async function start() {
       }
     } else if (connection === "open") {
       console.log("Koneksi terbuka, memuat jadwal sholat...");
-        // PANGGIL FUNGSI INISIALISASI DI SINI
-        await initializeSchedules(bot);
+      // PANGGIL FUNGSI INISIALISASI DI SINI
+      await initializeSchedules(bot);
     }
     console.log("connection update", update);
   });
@@ -137,26 +144,26 @@ async function start() {
 }
 
 function loadCommands(dir, bot) {
-    bot.commands.clear();
-    const commandsPath = path.join(__dirname, dir);
-    fs.readdirSync(commandsPath).forEach(folder => {
-        const folderPath = path.join(commandsPath, folder);
-        fs.readdirSync(folderPath).filter(file => file.endsWith(".js")).forEach(file => {
-            const filePath = path.join(folderPath, file);
-            delete require.cache[require.resolve(filePath)];
-            try {
-                const command = require(filePath);
-                command.category = folder;
-                bot.commands.set(command.name, command);
-                if (command.alias) {
-                    command.alias.forEach(alias => bot.commands.set(alias, command));
-                }
-            } catch (error) {
-                console.error(`Gagal memuat perintah dari ${filePath}:`, error);
-            }
-        });
+  bot.commands.clear();
+  const commandsPath = path.join(__dirname, dir);
+  fs.readdirSync(commandsPath).forEach(folder => {
+    const folderPath = path.join(commandsPath, folder);
+    fs.readdirSync(folderPath).filter(file => file.endsWith(".js")).forEach(file => {
+      const filePath = path.join(folderPath, file);
+      delete require.cache[require.resolve(filePath)];
+      try {
+        const command = require(filePath);
+        command.category = folder;
+        bot.commands.set(command.name, command);
+        if (command.alias) {
+          command.alias.forEach(alias => bot.commands.set(alias, command));
+        }
+      } catch (error) {
+        console.error(`Gagal memuat perintah dari ${filePath}:`, error);
+      }
     });
-    console.log(`Perintah berhasil dimuat: ${bot.commands.size} perintah.`);
+  });
+  console.log(`Perintah berhasil dimuat: ${bot.commands.size} perintah.`);
 }
 
 start().catch(console.error);
