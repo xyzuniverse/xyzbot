@@ -4,29 +4,27 @@ const path = require('path');
 
 const unoGames = {};
 
-// --- KAMUS PENERJEMAH BARU YANG LEBIH LENGKAP ---
 const Terjemahan = {
     warna: { 'merah': 'RED', 'red': 'RED', 'kuning': 'YELLOW', 'yellow': 'YELLOW', 'hijau': 'GREEN', 'green': 'GREEN', 'biru': 'BLUE', 'blue': 'BLUE' },
     nilai: {
-        '0': 'ZERO', 'nol': 'ZERO', 'zero': 'ZERO',
-        '1': 'ONE', 'satu': 'ONE', 'one': 'ONE',
-        '2': 'TWO', 'dua': 'TWO', 'two': 'TWO',
-        '3': 'THREE', 'tiga': 'THREE', 'three': 'THREE',
-        '4': 'FOUR', 'empat': 'FOUR', 'four': 'FOUR',
-        '5': 'FIVE', 'lima': 'FIVE', 'five': 'FIVE',
-        '6': 'SIX', 'enam': 'SIX', 'six': 'SIX',
-        '7': 'SEVEN', 'tujuh': 'SEVEN', 'seven': 'SEVEN',
-        '8': 'EIGHT', 'delapan': 'EIGHT', 'eight': 'EIGHT',
+        '0': 'ZERO', 'nol': 'ZERO', 'zero': 'ZERO', 
+        '1': 'ONE', 'satu': 'ONE', 'one': 'ONE', 
+        '2': 'TWO', 'dua': 'TWO', 'two': 'TWO', 
+        '3': 'THREE', 'tiga': 'THREE', 'three': 'THREE', 
+        '4': 'FOUR', 'empat': 'FOUR', 'four': 'FOUR', 
+        '5': 'FIVE', 'lima': 'FIVE', 'five': 'FIVE', 
+        '6': 'SIX', 'enam': 'SIX', 'six': 'SIX', 
+        '7': 'SEVEN', 'tujuh': 'SEVEN', 'seven': 'SEVEN', 
+        '8': 'EIGHT', 'delapan': 'EIGHT', 'eight': 'EIGHT', 
         '9': 'NINE', 'sembilan': 'NINE', 'nine': 'NINE',
-        'skip': 'SKIP', 'lewati': 'SKIP',
-        'reverse': 'REVERSE', 'putar-balik': 'REVERSE',
+        'skip': 'SKIP', 'lewati': 'SKIP', 
+        'reverse': 'REVERSE', 'putar-balik': 'REVERSE', 
         'draw-two': 'DRAW_TWO', 'tambah-2': 'DRAW_TWO', 'tambah_2': 'DRAW_TWO',
-        'wild': 'WILD', 'hitam': 'WILD',
+        'wild': 'WILD', 'hitam': 'WILD', 
         'wild-draw-four': 'WILD_DRAW_FOUR', 'tambah-4': 'WILD_DRAW_FOUR', 'tambah_4': 'WILD_DRAW_FOUR'
     }
 };
 
-// --- FUNGSI BANTU ---
 function valueToString(value) {
     const key = Object.keys(Value).find(k => Value[k] === value);
     return key ? key.toLowerCase().replace(/_/g, '-') : 'unknown';
@@ -46,29 +44,21 @@ function cardToFileName(card) {
 }
 async function sendPlayerHand(bot, player, hand, groupId) {
     try {
-        await bot.sendMessage(player.id, { text: "=====================\n\n🃏 *Kartu Anda saat ini:* 🃏\n\n=====================" });
+        await bot.sendMessage(player.id, { text: "====================\n\n🃏 *Kartu Anda saat ini:* \n\n====================" });
         for (const card of hand) {
             const fileName = cardToFileName(card);
             const filePath = path.join(__dirname, '../../lib/cards/', fileName);
-            
-            const color = colorToString(card.color);
-            const value = valueToString(card.value);
-            
-            // --- INSTRUKSI BARU YANG LEBIH JELAS ---
-            let caption = "Gunakan perintah:\n";
-            if (value.startsWith('wild')) {
-                caption += `\`.uno ${value} <warna>\`\nContoh: \`.uno ${value} merah\``;
-            } else {
-                caption += `\`.uno ${color} ${value}\`\n`;
-                // Menambahkan contoh dalam bahasa indonesia jika berbeda
-                const warnaIndo = Object.keys(Terjemahan.warna).find(k => Terjemahan.warna[k] === color.toUpperCase() && k !== color);
-                const nilaiIndo = Object.keys(Terjemahan.nilai).find(k => Terjemahan.nilai[k] === value.toUpperCase().replace('-','_') && !/\d/.test(k) && k !== value);
-                if (warnaIndo && nilaiIndo) {
-                    caption += `atau \`.uno ${warnaIndo} ${nilaiIndo}\``;
-                }
-            }
-
+            const color = colorToString(card.color) || 'hitam';
+            let value = valueToString(card.value).replace('-','_');
+            if (value === 'wild_draw_four') value = 'tambah_4';
+            if (value === 'draw_two') value = 'tambah_2';
+            if (value === 'reverse') value = 'putar-balik';
+            if (value === 'skip') value = 'lewati';
+            const playCommand = `.uno ${color} ${value}`;
             if (fs.existsSync(filePath)) {
+                const caption = value.startsWith('wild') || value.startsWith('tambah_4')
+                    ? `Ketik: \`.uno ${value} <warna>\`\n(Contoh: .uno ${value} merah)`
+                    : `Ketik: \`${playCommand}\``;
                 await bot.sendMessage(player.id, { image: fs.readFileSync(filePath), caption });
             } else {
                 await bot.sendMessage(player.id, { text: `Kartu: ${(color || '').toUpperCase()} ${value.toUpperCase()}`});
@@ -84,15 +74,11 @@ async function announceGameState(bot, msg, session) {
     const topCard = game.discardedCard;
     const currentPlayerId = game.currentPlayer.name;
     const currentPlayer = session.players.find(p => p.id === currentPlayerId);
-
     if (!currentPlayer) return msg.reply("Error Kritis: Pemain tidak ditemukan.");
-    
     const topCardPath = path.join(__dirname, '../../lib/cards/', cardToFileName(topCard));
     if (!fs.existsSync(topCardPath)) return msg.reply("Error: Gagal menemukan gambar kartu teratas.");
-    
     const playerMension = `@${currentPlayer.name} (${currentPlayer.id.split('@')[0]})`;
     let message = `*Giliran: ${playerMension}*\nJumlah kartu: ${game.getPlayer(currentPlayer.id).hand.length}`;
-    
     await bot.sendMessage(msg.from, {
         image: fs.readFileSync(topCardPath),
         caption: `🃏 Kartu teratas: *${(colorToString(topCard.color) || 'WILD').toUpperCase()} ${valueToString(topCard.value).toUpperCase().replace(/-/g, ' ')}*\n\n${message}`,
@@ -108,21 +94,43 @@ async function notifyPlayersOfEnd(bot, players, winner, endMessage) {
     }
 }
 
-
 module.exports = {
   name: "uno",
   alias: ["unocreate", "unojoin", "unostart", "unoend", "unocards", "unodraw"],
   description: "Memainkan game UNO.",
   execute: async (msg, { bot, args, command, usedPrefix }) => {
-    // ... (Logika lobi tidak berubah) ...
     const groupId = msg.from;
     const senderId = msg.sender;
     const senderName = msg.pushName;
     
+    // --- PERBAIKAN UTAMA: FUNGSI BANTUAN UNTUK .uno ---
+    if (command === "uno" && args.length === 0) {
+        const helpMessage = `
+🃏 *Game UNO Bot* 🃏
+
+Berikut adalah perintah yang tersedia untuk mengelola permainan UNO:
+
+*Lobi Permainan:*
+- \`${usedPrefix}unocreate\`: Membuat lobi game baru.
+- \`${usedPrefix}unojoin\`: Bergabung ke lobi yang sudah ada.
+- \`${usedPrefix}unostart\`: Memulai permainan (hanya host).
+- \`${usedPrefix}unoend\`: Menghentikan permainan (hanya host).
+
+*Saat Bermain:*
+- \`${usedPrefix}uno <warna> <nilai>\`: Memainkan kartu. Contoh: \`.uno merah 7\` atau \`.uno hijau lewati\`.
+- \`${usedPrefix}uno <wild> <warna>\`: Memainkan kartu wild. Contoh: \`.uno wild merah\` atau \`.uno tambah_4 biru\`.
+- \`${usedPrefix}unocards\`: Meminta bot mengirim ulang kartu Anda di PM.
+- \`${usedPrefix}unodraw\`: Mengambil kartu dari tumpukan.
+
+Selamat bermain!
+        `;
+        return msg.reply(helpMessage.trim());
+    }
+
     if (command === "unocreate") {
         if (unoGames[groupId]) return msg.reply("⚠️ Sudah ada sesi game UNO yang aktif.");
         unoGames[groupId] = { host: senderId, players: [{ id: senderId, name: senderName }], status: 'waiting' };
-        return msg.reply(`✅ Lobi UNO dibuat oleh @${senderName}(${senderId.split('@')[0]})!\nKetik \`${usedPrefix}unojoin\` untuk bergabung.`, { mentions: [senderId] });
+        return msg.reply(`✅ Lobi UNO dibuat oleh @${senderName} (${senderId.split('@')[0]})!\nKetik \`${usedPrefix}unojoin\` untuk bergabung.`, { mentions: [senderId] });
     }
     if (command === "unojoin") {
         const session = unoGames[groupId];
@@ -181,39 +189,29 @@ module.exports = {
         return;
     }
     
-    // --- PERBAIKAN TOTAL UNTUK LOGIKA .uno ---
     if (command === "uno") {
         if (game.currentPlayer.name !== senderId) return msg.reply("⚠️ Belum giliran Anda!");
-        if (args.length < 1) return msg.reply(`Gunakan format: \`.uno <warna> <nilai>\` atau \`.uno <kartu_wild> <warna>\`.`);
+        if (args.length < 1) return; // Seharusnya sudah ditangani oleh blok bantuan di atas
 
         const input1 = args[0]?.toLowerCase();
         const input2 = args[1]?.toLowerCase();
         
         let cardToPlay;
-
         try {
-            // Logika baru yang lebih cerdas dengan kamus Terjemahan
             const translatedKey1 = Terjemahan.nilai[input1] || Terjemahan.warna[input1];
-            
             if (translatedKey1 === 'WILD' || translatedKey1 === 'WILD_DRAW_FOUR') {
                 const valueToFind = Value[translatedKey1];
                 cardToPlay = player.getCardByValue(valueToFind);
                 if (!cardToPlay) return msg.reply("⚠️ Anda tidak memiliki kartu wild tersebut!");
-
                 const translatedChosenColorKey = Terjemahan.warna[input2];
                 if (!translatedChosenColorKey) return msg.reply(`⚠️ Anda harus memilih warna setelah kartu wild! Contoh: \`.uno ${input1} merah\``);
-                
                 cardToPlay.color = Color[translatedChosenColorKey];
-            
             } else {
                 const translatedColorKey = Terjemahan.warna[input1];
                 const translatedValueKey = Terjemahan.nilai[input2];
-                
                 if (!translatedColorKey || !translatedValueKey) return msg.reply("⚠️ Input kartu tidak valid. (Contoh: .uno merah 7, .uno biru lewati)");
-                
                 const targetColor = Color[translatedColorKey];
                 const targetValue = Value[translatedValueKey];
-
                 cardToPlay = player.hand.find(c => c.color === targetColor && c.value === targetValue);
             }
 
