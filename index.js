@@ -122,8 +122,20 @@ async function start() {
 
     // Jika ada QR code, tampilkan di terminal
     if (qr) {
-      console.log("Pindai QR code ini untuk terhubung:");
+      console.log('------------------------------------------------');
+      console.log('📱 Pindai QR Code di bawah ini untuk terhubung:');
+
+      // --- METODE 1: Menampilkan QR di Terminal ---
+      // Mungkin berantakan di Termux, tapi kita tetap coba tampilkan
       qrcode.generate(qr, { small: true });
+
+      // --- METODE 2: Menampilkan Link QR Code ---
+      // Ini adalah cadangan jika gambar QR di atas tidak jelas
+      const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qr)}`;
+      console.log('\n Atau, jika QR di atas berantakan:');
+      console.log('👇 Salin link ini dan buka di browser Anda:');
+      console.log(qrLink);
+      console.log('------------------------------------------------');
     }
 
     if (connection === "close") {
