@@ -1,7 +1,7 @@
 const axios = require('axios');
 const cron = require('node-cron');
-const { createCanvas, loadImage } = require('canvas');
-
+const { createCanvas, loadImage, registerFont  } = require('canvas');
+const path = require('path'); 
 const scheduledJobs = {};
 
 // --- FUNGSI API ---
@@ -29,6 +29,15 @@ async function getPrayerTimes(cityId, date = new Date()) {
         throw new Error("Gagal mengambil data jadwal sholat.");
     }
 }
+
+const fontPath = path.join(__dirname, '../../lib/fonts/UthmanicHafs.ttf');
+try {
+    registerFont(fontPath, { family: 'QuranFont' });
+    console.log('[FONT] Font Quran kustom berhasil didaftarkan.');
+} catch (e) {
+    console.error(`[FONT] Gagal mendaftarkan font dari ${fontPath}:`, e);
+}
+
 // Fungsi untuk membuat gambar jadwal sholat
 async function createScheduleImage(prayerData) {
     const width = 900;
@@ -280,7 +289,7 @@ async function createScheduleImage(prayerData) {
     
     // Bismillah di header
     ctx.fillStyle = '#ffd700';
-    ctx.font = '32px Arial';
+    ctx.font = '32px QuranFont';
     ctx.textAlign = 'center';
     ctx.fillText('بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ', width / 2, 50);
     
@@ -403,7 +412,7 @@ async function createScheduleImage(prayerData) {
 
     // Ayat Al-Quran dalam bahasa Arab
     ctx.fillStyle = '#ffd700';
-    ctx.font = '32px Arial';
+    ctx.font = '32px QuranFont';
     ctx.textAlign = 'center';
     
     // Baris pertama ayat
