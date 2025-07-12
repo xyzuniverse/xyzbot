@@ -2,26 +2,20 @@ const { Game, Value, Color } = require('uno-engine');
 const fs = require('fs');
 const path = require('path');
 
+// Variabel global untuk menyimpan semua sesi game yang aktif
 const unoGames = {};
 
+// --- FUNGSI PENTING UNTUK MENCEGAH SPAM ---
+// Fungsi ini akan kita gunakan untuk memberi jeda pada setiap aksi bot
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// --- Fungsi Helper untuk menerjemahkan input dan data kartu ---
 const Terjemahan = {
     warna: { 'merah': 'RED', 'red': 'RED', 'kuning': 'YELLOW', 'yellow': 'YELLOW', 'hijau': 'GREEN', 'green': 'GREEN', 'biru': 'BLUE', 'blue': 'BLUE' },
     nilai: {
-        '0': 'ZERO', 'nol': 'ZERO', 'zero': 'ZERO', 
-        '1': 'ONE', 'satu': 'ONE', 'one': 'ONE', 
-        '2': 'TWO', 'dua': 'TWO', 'two': 'TWO', 
-        '3': 'THREE', 'tiga': 'THREE', 'three': 'THREE', 
-        '4': 'FOUR', 'empat': 'FOUR', 'four': 'FOUR', 
-        '5': 'FIVE', 'lima': 'FIVE', 'five': 'FIVE', 
-        '6': 'SIX', 'enam': 'SIX', 'six': 'SIX', 
-        '7': 'SEVEN', 'tujuh': 'SEVEN', 'seven': 'SEVEN', 
-        '8': 'EIGHT', 'delapan': 'EIGHT', 'eight': 'EIGHT', 
-        '9': 'NINE', 'sembilan': 'NINE', 'nine': 'NINE',
-        'skip': 'SKIP', 'lewati': 'SKIP', 
-        'reverse': 'REVERSE', 'putar-balik': 'REVERSE', 
-        'draw-two': 'DRAW_TWO', 'tambah-2': 'DRAW_TWO', 'tambah_2': 'DRAW_TWO',
-        'wild': 'WILD', 'hitam': 'WILD', 
-        'wild-draw-four': 'WILD_DRAW_FOUR', 'tambah-4': 'WILD_DRAW_FOUR', 'tambah_4': 'WILD_DRAW_FOUR'
+        '0': 'ZERO', 'nol': 'ZERO', '1': 'ONE', 'satu': 'ONE', '2': 'TWO', 'dua': 'TWO', '3': 'THREE', 'tiga': 'THREE', '4': 'FOUR', 'empat': 'FOUR', '5': 'FIVE', 'lima': 'FIVE', '6': 'SIX', 'enam': 'SIX', '7': 'SEVEN', 'tujuh': 'SEVEN', '8': 'EIGHT', 'delapan': 'EIGHT', '9': 'NINE', 'sembilan': 'NINE',
+        'skip': 'SKIP', 'lewati': 'SKIP', 'reverse': 'REVERSE', 'putar-balik': 'REVERSE', 'draw-two': 'DRAW_TWO', 'tambah-2': 'DRAW_TWO', 'tambah_2': 'DRAW_TWO',
+        'wild': 'WILD', 'hitam': 'WILD', 'wild-draw-four': 'WILD_DRAW_FOUR', 'tambah-4': 'WILD_DRAW_FOUR', 'tambah_4': 'WILD_DRAW_FOUR'
     }
 };
 
@@ -29,11 +23,13 @@ function valueToString(value) {
     const key = Object.keys(Value).find(k => Value[k] === value);
     return key ? key.toLowerCase().replace(/_/g, '-') : 'unknown';
 }
+
 function colorToString(color) {
     if (!color) return null;
     const key = Object.keys(Color).find(k => Color[k] === color);
     return key ? key.toLowerCase() : null;
 }
+
 function cardToFileName(card) {
     const valueStr = valueToString(card.value);
     const colorStr = colorToString(card.color);
@@ -42,57 +38,79 @@ function cardToFileName(card) {
     }
     return `${colorStr}_${valueStr}.png`;
 }
-async function sendPlayerHand(bot, player, hand, groupId) {
+
+// --- Fungsi Bot yang Sudah Ditambahkan Jeda Waktu ---
+
+async function sendPlayerHand(bot, player, hand) {
     try {
         await bot.sendMessage(player.id, { text: "====================\n\n🃏 *Kartu Anda saat ini:* \n\n====================" });
+        // Jeda singkat sebelum mengirim kartu satu per satu
+        await sleep(500);
+
         for (const card of hand) {
             const fileName = cardToFileName(card);
             const filePath = path.join(__dirname, '../../lib/cards/', fileName);
             const color = colorToString(card.color) || 'hitam';
-            let value = valueToString(card.value).replace('-','_');
+            let value = valueToString(card.value).replace('-', '_');
             if (value === 'wild_draw_four') value = 'tambah_4';
             if (value === 'draw_two') value = 'tambah_2';
             if (value === 'reverse') value = 'putar-balik';
             if (value === 'skip') value = 'lewati';
+            
             const playCommand = `.uno ${color} ${value}`;
+            const caption = value.startsWith('wild') || value.startsWith('tambah_4')
+                ? `Ketik: \`.uno ${value} <warna>\`\n(Contoh: .uno ${value} merah)`
+                : `Ketik: \`${playCommand}\``;
+            
             if (fs.existsSync(filePath)) {
-                const caption = value.startsWith('wild') || value.startsWith('tambah_4')
-                    ? `Ketik: \`.uno ${value} <warna>\`\n(Contoh: .uno ${value} merah)`
-                    : `Ketik: \`${playCommand}\``;
                 await bot.sendMessage(player.id, { image: fs.readFileSync(filePath), caption });
             } else {
-                await bot.sendMessage(player.id, { text: `Kartu: ${(color || '').toUpperCase()} ${value.toUpperCase()}`});
+                await bot.sendMessage(player.id, { text: `Kartu: ${(color || '').toUpperCase()} ${value.toUpperCase()}` });
                 console.warn(`File kartu tidak ditemukan: ${fileName}`);
             }
+            // Jeda acak antar kartu untuk membuatnya terlihat lebih natural
+            await sleep(Math.floor(Math.random() * 500) + 300); // Jeda 0.3 - 0.8 detik
         }
     } catch (e) {
         console.error(`Gagal mengirim kartu ke ${player.name}:`, e);
     }
 }
+
 async function announceGameState(bot, msg, session) {
+    // Jeda sebelum mengumumkan status game untuk memberi waktu proses lain
+    await sleep(1000); 
     const game = session.game;
     const topCard = game.discardedCard;
-    const currentPlayerId = game.currentPlayer.name;
-    const currentPlayer = session.players.find(p => p.id === currentPlayerId);
-    if (!currentPlayer) return msg.reply("Error Kritis: Pemain tidak ditemukan.");
+    const currentPlayer = session.players.find(p => p.id === game.currentPlayer.name);
+
+    if (!currentPlayer) return msg.reply("Error Kritis: Pemain saat ini tidak ditemukan.");
+
     const topCardPath = path.join(__dirname, '../../lib/cards/', cardToFileName(topCard));
     if (!fs.existsSync(topCardPath)) return msg.reply("Error: Gagal menemukan gambar kartu teratas.");
+    
     const playerMension = `@${currentPlayer.name} (${currentPlayer.id.split('@')[0]})`;
     let message = `*Giliran: ${playerMension}*\nJumlah kartu: ${game.getPlayer(currentPlayer.id).hand.length}`;
+    
     await bot.sendMessage(msg.from, {
         image: fs.readFileSync(topCardPath),
         caption: `🃏 Kartu teratas: *${(colorToString(topCard.color) || 'WILD').toUpperCase()} ${valueToString(topCard.value).toUpperCase().replace(/-/g, ' ')}*\n\n${message}`,
         mentions: [currentPlayer.id]
     });
 }
+
 async function notifyPlayersOfEnd(bot, players, winner, endMessage) {
     for (const player of players) {
         try {
             const message = (winner && player.id === winner.id) ? "Selamat, Anda memenangkan permainan! 🥳" : endMessage;
             await bot.sendMessage(player.id, { text: message });
-        } catch (e) {}
+            await sleep(500); // Jeda antar notifikasi
+        } catch (e) {
+            console.error(`Gagal mengirim notifikasi akhir ke ${player.name}:`, e);
+        }
     }
 }
+
+// --- Logika Utama Perintah UNO ---
 
 module.exports = {
   name: "uno",
@@ -101,87 +119,84 @@ module.exports = {
   execute: async (msg, { bot, args, command, usedPrefix }) => {
     const groupId = msg.from;
     const senderId = msg.sender;
-    const senderName = msg.pushName;
-    
-    // --- PERBAIKAN UTAMA: FUNGSI BANTUAN UNTUK .uno ---
+    const senderName = msg.pushName || "Pemain";
+
     if (command === "uno" && args.length === 0) {
-        const helpMessage = `
-🃏 *Game UNO Bot* 🃏
-
-Berikut adalah perintah yang tersedia untuk mengelola permainan UNO:
-
-*Lobi Permainan:*
-- \`${usedPrefix}unocreate\`: Membuat lobi game baru.
-- \`${usedPrefix}unojoin\`: Bergabung ke lobi yang sudah ada.
-- \`${usedPrefix}unostart\`: Memulai permainan (hanya host).
-- \`${usedPrefix}unoend\`: Menghentikan permainan (hanya host).
-
-*Saat Bermain:*
-- \`${usedPrefix}uno <warna> <nilai>\`: Memainkan kartu. Contoh: \`.uno merah 7\` atau \`.uno hijau lewati\`.
-- \`${usedPrefix}uno <wild> <warna>\`: Memainkan kartu wild. Contoh: \`.uno wild merah\` atau \`.uno tambah_4 biru\`.
-- \`${usedPrefix}unocards\`: Meminta bot mengirim ulang kartu Anda di PM.
-- \`${usedPrefix}unodraw\`: Mengambil kartu dari tumpukan.
-
-Selamat bermain!
-        `;
+        const helpMessage = `🃏 *Game UNO Bot* 🃏\n\nPerintah yang tersedia:\n\n*Lobi Permainan:*\n- \`${usedPrefix}unocreate\`: Membuat lobi baru.\n- \`${usedPrefix}unojoin\`: Bergabung ke lobi.\n- \`${usedPrefix}unostart\`: Memulai permainan (host).\n- \`${usedPrefix}unoend\`: Menghentikan permainan (host).\n\n*Saat Bermain:*\n- \`${usedPrefix}uno <warna> <nilai>\`: Memainkan kartu.\n- \`${usedPrefix}uno <wild> <warna>\`: Memainkan kartu wild.\n- \`${usedPrefix}unocards\`: Meminta kartu dikirim ulang.\n- \`${usedPrefix}unodraw\`: Mengambil kartu.`;
         return msg.reply(helpMessage.trim());
     }
 
+    // --- Perintah Lobi ---
     if (command === "unocreate") {
-        if (unoGames[groupId]) return msg.reply("⚠️ Sudah ada sesi game UNO yang aktif.");
+        if (unoGames[groupId]) return msg.reply("⚠️ Sudah ada sesi game UNO yang aktif di grup ini.");
         unoGames[groupId] = { host: senderId, players: [{ id: senderId, name: senderName }], status: 'waiting' };
-        return msg.reply(`✅ Lobi UNO dibuat oleh @${senderName} (${senderId.split('@')[0]})!\nKetik \`${usedPrefix}unojoin\` untuk bergabung.`, { mentions: [senderId] });
+        return msg.reply(`✅ Lobi UNO dibuat oleh @${senderId.split('@')[0]}!\nKetik \`${usedPrefix}unojoin\` untuk bergabung.`, { mentions: [senderId] });
     }
+
     if (command === "unojoin") {
         const session = unoGames[groupId];
         if (!session || session.status !== 'waiting') return msg.reply("⚠️ Tidak ada lobi untuk bergabung.");
         if (session.players.some(p => p.id === senderId)) return msg.reply("⚠️ Anda sudah bergabung.");
         session.players.push({ id: senderId, name: senderName });
-        let playerList = "👥 *Pemain saat ini:*\n";
-        session.players.forEach((p, i) => { playerList += `${i + 1}. ${p.name} (@${p.id.split('@')[0]})\n`; });
-        await msg.reply(`✅ @${senderName} (${senderId.split('@')[0]}) berhasil bergabung!\n\n${playerList}`, { mentions: [senderId, ...session.players.map(p => p.id)] });
-        return;
+        let playerList = session.players.map((p, i) => `${i + 1}. ${p.name} (@${p.id.split('@')[0]})`).join('\n');
+        return msg.reply(`✅ @${senderId.split('@')[0]} berhasil bergabung!\n\n👥 *Pemain saat ini:*\n${playerList}`, { mentions: session.players.map(p => p.id) });
     }
+
     if (command === "unoend") {
         const session = unoGames[groupId];
         if (!session) return msg.reply("⚠️ Tidak ada game yang berjalan.");
         if (session.host !== senderId) return msg.reply("⚠️ Hanya host yang bisa menghentikan game.");
-        const endMessage = `ℹ️ Game UNO di grup ini telah dihentikan oleh host (@${senderName} (${senderId.split('@')[0]})).`;
-        await notifyPlayersOfEnd(bot, session.players, null, endMessage);
+        
+        await msg.react("🛑");
+        const endMessage = `ℹ️ Game UNO di grup ini telah dihentikan oleh host.`;
+        if (session.players.length > 0) {
+            await notifyPlayersOfEnd(bot, session.players, null, endMessage);
+        }
         delete unoGames[groupId];
-        return msg.reply(endMessage, { mentions: [senderId] });
+        return msg.reply(endMessage);
     }
+    
     if (command === "unostart") {
         const session = unoGames[groupId];
-        if (session?.host !== senderId) return msg.reply("⚠️ Hanya host yang bisa memulai game.");
+        if (!session || session.host !== senderId) return msg.reply("⚠️ Hanya host yang bisa memulai game.");
         if (session.players.length < 2) return msg.reply("⚠️ Butuh minimal 2 pemain.");
+        if (session.status === 'playing') return msg.reply("⚠️ Game sudah dimulai.");
+
         session.status = 'playing';
         session.game = new Game(session.players.map(p => p.id));
-        await msg.reply("✅ Game dimulai! Mengirim kartu...");
+        
+        await msg.reply("✅ Game dimulai! Mengirim kartu ke setiap pemain...");
+        await sleep(1500); // Jeda sebelum membagikan kartu
+
         for (const p of session.players) {
-            await sendPlayerHand(bot, p, session.game.getPlayer(p.id).hand, groupId);
+            await sendPlayerHand(bot, p, session.game.getPlayer(p.id).hand);
         }
+
         await announceGameState(bot, msg, session);
         return;
     }
 
+    // --- Perintah Saat Bermain ---
     const session = unoGames[groupId];
-    if (!session || session.status !== 'playing') return;
+    if (!session || session.status !== 'playing') return; // Abaikan jika tidak ada game yang berjalan
+    
     const game = session.game;
     const player = game.getPlayer(senderId);
 
     if (command === "unocards") {
         if (!player) return msg.reply("⚠️ Anda bukan bagian dari game ini.");
-        return await sendPlayerHand(bot, { id: senderId, name: senderName }, player.hand, groupId);
+        await msg.react("👍");
+        return await sendPlayerHand(bot, { id: senderId, name: senderName }, player.hand);
     }
     
     if (command === "unodraw") {
         if (game.currentPlayer.name !== senderId) return msg.reply("⚠️ Belum giliran Anda!");
         try {
             game.draw();
-            await msg.reply(`@${senderName} (${senderId.split('@')[0]}) mengambil kartu.`, { mentions: [senderId] });
-            game.pass();
-            await sendPlayerHand(bot, { id: senderId, name: senderName }, player.hand, groupId);
+            await msg.reply(`@${senderId.split('@')[0]} mengambil sebuah kartu.`, { mentions: [senderId] });
+            game.pass(); // Otomatis mengoper giliran setelah draw
+            await sleep(500);
+            await sendPlayerHand(bot, { id: senderId, name: senderName }, player.hand);
             await announceGameState(bot, msg, session); 
         } catch (e) {
             return msg.reply(`⚠️ Gagal mengambil kartu: ${e.message}`);
@@ -191,53 +206,50 @@ Selamat bermain!
     
     if (command === "uno") {
         if (game.currentPlayer.name !== senderId) return msg.reply("⚠️ Belum giliran Anda!");
-        if (args.length < 1) return; // Seharusnya sudah ditangani oleh blok bantuan di atas
-
+        
         const input1 = args[0]?.toLowerCase();
         const input2 = args[1]?.toLowerCase();
-        
         let cardToPlay;
+
         try {
-            const translatedKey1 = Terjemahan.nilai[input1] || Terjemahan.warna[input1];
-            if (translatedKey1 === 'WILD' || translatedKey1 === 'WILD_DRAW_FOUR') {
-                const valueToFind = Value[translatedKey1];
-                cardToPlay = player.getCardByValue(valueToFind);
+            const isWild = Terjemahan.nilai[input1] === 'WILD' || Terjemahan.nilai[input1] === 'WILD_DRAW_FOUR';
+            if (isWild) {
+                const valueToFind = Value[Terjemahan.nilai[input1]];
+                cardToPlay = player.hand.find(c => c.value === valueToFind);
                 if (!cardToPlay) return msg.reply("⚠️ Anda tidak memiliki kartu wild tersebut!");
-                const translatedChosenColorKey = Terjemahan.warna[input2];
-                if (!translatedChosenColorKey) return msg.reply(`⚠️ Anda harus memilih warna setelah kartu wild! Contoh: \`.uno ${input1} merah\``);
-                cardToPlay.color = Color[translatedChosenColorKey];
+                const chosenColorKey = Terjemahan.warna[input2];
+                if (!chosenColorKey) return msg.reply(`⚠️ Anda harus memilih warna setelah kartu wild! Contoh: \`${usedPrefix}uno ${input1} merah\``);
+                cardToPlay.color = Color[chosenColorKey];
             } else {
-                const translatedColorKey = Terjemahan.warna[input1];
-                const translatedValueKey = Terjemahan.nilai[input2];
-                if (!translatedColorKey || !translatedValueKey) return msg.reply("⚠️ Input kartu tidak valid. (Contoh: .uno merah 7, .uno biru lewati)");
-                const targetColor = Color[translatedColorKey];
-                const targetValue = Value[translatedValueKey];
-                cardToPlay = player.hand.find(c => c.color === targetColor && c.value === targetValue);
+                const colorKey = Terjemahan.warna[input1];
+                const valueKey = Terjemahan.nilai[input2];
+                if (!colorKey || !valueKey) return msg.reply("⚠️ Input kartu tidak valid. (Contoh: .uno merah 7)");
+                cardToPlay = player.hand.find(c => c.color === Color[colorKey] && c.value === Value[valueKey]);
             }
 
-            if (!cardToPlay) return msg.reply("⚠️ Anda tidak memiliki kartu tersebut!");
+            if (!cardToPlay) return msg.reply("⚠️ Anda tidak memiliki kartu tersebut atau kartu tidak cocok!");
 
             game.play(cardToPlay);
             
             if (player.hand.length === 0) {
                 const winner = session.players.find(p => p.id === senderId);
-                let scoreboard = "🏆 *Papan Skor Akhir* 🏆";
-                session.players.forEach(p => {
-                    if (p.id !== winner.id) {
-                        const remainingCards = game.getPlayer(p.id).hand.length;
-                        scoreboard += `\n- ${p.name} (@${p.id.split('@')[0]}): ${remainingCards} kartu`;
-                    }
-                });
-                const endMessageToGroup = `🎉 *PEMENANG!* 🎉\n\nSelamat kepada @${winner.name} (${winner.id.split('@')[0]}), dia telah menghabiskan semua kartunya!\n\n${scoreboard}`;
+                let scoreboard = session.players.filter(p => p.id !== winner.id)
+                    .map(p => `- ${p.name}: ${game.getPlayer(p.id).hand.length} kartu`).join('\n');
+
+                const endMessageToGroup = `🎉 *PEMENANG!* 🎉\n\nSelamat kepada @${winner.id.split('@')[0]}, dia telah menghabiskan semua kartunya!\n\n🏆 *Papan Skor Akhir* 🏆\n${scoreboard}`;
                 const endMessageToLosers = `Game UNO telah berakhir. Pemenangnya adalah ${winner.name}!`;
+
+                await msg.reply(endMessageToGroup, { mentions: session.players.map(p => p.id) });
                 await notifyPlayersOfEnd(bot, session.players, winner, endMessageToLosers);
-                delete unoGames[groupId];
-                return msg.reply(endMessageToGroup, { mentions: session.players.map(p => p.id) });
+                delete unoGames[groupId]; // Hapus sesi game
+                return;
             }
             
-            await msg.reply(`@${senderName} (${senderId.split('@')[0]}) memainkan kartu.`, { mentions: [senderId] });
+            await msg.react("🃏");
+            await sleep(1000);
             await announceGameState(bot, msg, session);
-            await sendPlayerHand(bot, { id: senderId, name: senderName }, player.hand, groupId);
+            await sendPlayerHand(bot, { id: senderId, name: senderName }, player.hand);
+
         } catch (e) {
             return msg.reply(`❌ Gagal memainkan kartu: ${e.message}`);
         }
