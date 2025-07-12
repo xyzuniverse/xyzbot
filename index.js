@@ -1,5 +1,3 @@
-// index.js (Versi Perbaikan Final)
-
 require("dotenv").config();
 
 // Impor semua yang dibutuhkan dari Baileys dan library lain
