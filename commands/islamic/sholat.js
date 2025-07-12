@@ -297,7 +297,7 @@ async function createScheduleImage(prayerData) {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 52px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('JADWAL SHOLAT', width / 2, 100);
+    ctx.fillText('JADWAL SHOLAT', width / 2, 110);
     
     // Reset shadow
     ctx.shadowColor = 'transparent';
