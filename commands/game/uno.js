@@ -10,10 +10,10 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // --- Fungsi Helper untuk menerjemahkan input dan data kartu ---
 const Terjemahan = {
-    warna: { 
-        'merah': 'RED', 'red': 'RED', 
-        'kuning': 'YELLOW', 'yellow': 'YELLOW', 
-        'hijau': 'GREEN', 'green': 'GREEN', 
+    warna: {
+        'merah': 'RED', 'red': 'RED',
+        'kuning': 'YELLOW', 'yellow': 'YELLOW',
+        'hijau': 'GREEN', 'green': 'GREEN',
         'biru': 'BLUE', 'blue': 'BLUE',
         'hitam': 'BLACK', 'black': 'BLACK'
     },
@@ -29,9 +29,9 @@ const Terjemahan = {
         '8': 'EIGHT', 'delapan': 'EIGHT', 'eight': 'EIGHT',
         '9': 'NINE', 'sembilan': 'NINE', 'nine': 'NINE',
         'skip': 'SKIP', 'lewati': 'SKIP',
-        'reverse': 'REVERSE', 'putar-balik': 'REVERSE', 
+        'reverse': 'REVERSE', 'putar-balik': 'REVERSE',
         'draw-two': 'DRAW_TWO', 'tambah-2': 'DRAW_TWO', 'tambah_2': 'DRAW_TWO',
-        'wild': 'WILD', 'hitam': 'WILD', 
+        'wild': 'WILD', 'hitam': 'WILD',
         'wild-draw-four': 'WILD_DRAW_FOUR', 'tambah-4': 'WILD_DRAW_FOUR', 'tambah_4': 'WILD_DRAW_FOUR', 'wild_draw-4': 'WILD_DRAW_FOUR', 'wild-draw_4': 'WILD_DRAW_FOUR',
     }
 };
@@ -58,12 +58,12 @@ function cardToFileName(card) {
 
 // --- FUNGSI BARU UNTUK MEMBUAT DAFTAR PERINTAH ---
 function generateAllCommands(card, usedPrefix) {
-    const engineCardColor = card.color;
     const engineCardValue = card.value;
 
-    if (card.isWildcard()) {
+    // --- INI BAGIAN YANG DIPERBAIKI ---
+    // Memeriksa wild card dengan membandingkan nilainya, bukan dengan fungsi isWildcard()
+    if (engineCardValue === Value.WILD || engineCardValue === Value.WILD_DRAW_FOUR) {
         const wildAliases = Object.keys(Terjemahan.nilai).filter(k => Value[Terjemahan.nilai[k]] === engineCardValue);
-        const playableColors = ['merah', 'kuning', 'hijau', 'biru'];
         let text = `*Cara Mainkan Kartu Wild:*\n`;
         text += `Gunakan salah satu dari: \`${wildAliases.join('`, `')}\`\n`;
         text += `diikuti warna pilihan (merah/kuning/hijau/biru).\n\n`;
@@ -71,6 +71,7 @@ function generateAllCommands(card, usedPrefix) {
         return text;
     }
 
+    const engineCardColor = card.color;
     const colorAliases = Object.keys(Terjemahan.warna).filter(k => Color[Terjemahan.warna[k]] === engineCardColor);
     const valueAliases = Object.keys(Terjemahan.nilai).filter(k => Value[Terjemahan.nilai[k]] === engineCardValue);
 
@@ -84,7 +85,7 @@ function generateAllCommands(card, usedPrefix) {
 }
 
 
-// --- FUNGSI LAMA YANG DIPERBARUI ---
+// --- FUNGSI-FUNGSI LAINNYA ---
 async function sendPlayerHand(bot, player, hand, usedPrefix) {
     try {
         await bot.sendMessage(player.id, { text: "====================\n\n🃏 *Kartu Anda saat ini:* \n\n====================" });
@@ -94,7 +95,6 @@ async function sendPlayerHand(bot, player, hand, usedPrefix) {
             const fileName = cardToFileName(card);
             const filePath = path.join(__dirname, '../../lib/cards/', fileName);
             
-            // Menggunakan fungsi baru untuk membuat caption
             const caption = generateAllCommands(card, usedPrefix);
             
             if (fs.existsSync(filePath)) {
@@ -105,7 +105,7 @@ async function sendPlayerHand(bot, player, hand, usedPrefix) {
                 await bot.sendMessage(player.id, { text: `Kartu: ${color.toUpperCase()} ${value}\n\n${caption}` });
                 console.warn(`File kartu tidak ditemukan: ${fileName}`);
             }
-            await sleep(Math.floor(Math.random() * 500) + 400); // Jeda 0.4 - 0.9 detik
+            await sleep(Math.floor(Math.random() * 500) + 400);
         }
     } catch (e) {
         console.error(`Gagal mengirim kartu ke ${player.name}:`, e);
@@ -164,7 +164,7 @@ module.exports = {
     if (command === "unocreate") {
         if (unoGames[groupId]) return msg.reply("⚠️ Sudah ada sesi game UNO yang aktif di grup ini.");
         unoGames[groupId] = { host: senderId, players: [{ id: senderId, name: senderName }], status: 'waiting' };
-        return msg.reply(`✅ Lobi UNO dibuat oleh @${senderId.split('@')[0]}!\nKetik \`${usedPrefix}unojoin\` untuk bergabung.`, { mentions: [senderId] });
+        return msg.reply(`✅ Lobi UNO dibuat oleh ${senderName} (@${senderId.split('@')[0]})!\nKetik \`${usedPrefix}unojoin\` untuk bergabung.`, { mentions: [senderId] });
     }
 
     if (command === "unojoin") {
@@ -173,7 +173,7 @@ module.exports = {
         if (session.players.some(p => p.id === senderId)) return msg.reply("⚠️ Anda sudah bergabung.");
         session.players.push({ id: senderId, name: senderName });
         let playerList = session.players.map((p, i) => `${i + 1}. ${p.name} (@${p.id.split('@')[0]})`).join('\n');
-        return msg.reply(`✅ @${senderId.split('@')[0]} berhasil bergabung!\n\n👥 *Pemain saat ini:*\n${playerList}`, { mentions: session.players.map(p => p.id) });
+        return msg.reply(`✅ ${senderName} (@${senderId.split('@')[0]}) berhasil bergabung!\n\n👥 *Pemain saat ini:*\n${playerList}`, { mentions: session.players.map(p => p.id) });
     }
 
     if (command === "unoend") {
