@@ -1,182 +1,156 @@
-// index.js (MENGGUNAKAN STORE KUSTOM)
-require("dotenv").config();
-const Collection = require("./lib/CommandCollections");
-const fs = require("fs");
-const path = require("node:path");
-const chokidar = require("chokidar");
-// --- FUNGSI UNTUK MEMUAT JADWAL SHOLAT SAAT STARTUP ---
-const cron = require('node-cron');
-const axios = require('axios');
-const qrcode = require('qrcode-terminal');
+// index.js (Versi Perbaikan Final)
 
-// Impor fungsi yang benar dari sholat.js
+require("dotenv").config();
+
+// Impor semua yang dibutuhkan dari Baileys dan library lain
+const {
+    default: makeWASocket,
+    useMultiFileAuthState,
+    DisconnectReason,
+    fetchLatestBaileysVersion,
+    makeCacheableSignalKeyStore,
+    makeInMemoryStore,
+    proto
+} = require('@whiskeysockets/baileys');
+
+const Pino = require('pino');
+const { Low, JSONFile } = require("./lib/lowdb");
+const fs = require("fs");
+const path = require("path");
+const chokidar = require("chokidar");
+const qrcode = require('qrcode-terminal');
+const Collection = require("./lib/CommandCollections");
+const { createCustomStore } = require('./lib/CustomStore.js');
+
+// --- Fungsi untuk memuat jadwal sholat (jika ada) ---
 const { getPrayerTimes, schedulePrayerNotifications } = require('./commands/islamic/sholat.js').internalFunctions || {};
 
 async function initializeSchedules(bot) {
-  // Pastikan fungsi berhasil diimpor sebelum melanjutkan
-  if (typeof getPrayerTimes !== 'function' || typeof schedulePrayerNotifications !== 'function') {
-    console.log("Fungsi internal sholat tidak ditemukan, penjadwalan startup dilewati.");
-    return;
-  }
-
-  console.log("Memuat dan menginisialisasi jadwal sholat dari database...");
-  if (!bot.db.data || !bot.db.data.groups) {
-    console.log("Database atau data grup tidak ditemukan, penjadwalan dilewati.");
-    return;
-  }
-
-  const groups = bot.db.data.groups;
-  for (const groupId in groups) {
-    if (groups[groupId].sholat_city_id) {
-      const cityId = groups[groupId].sholat_city_id;
-      try {
-        const prayerTimes = await getPrayerTimes(cityId);
-        if (prayerTimes) {
-          // Panggil fungsi yang diimpor dan pastikan semua parameter dikirim
-          schedulePrayerNotifications(bot, groupId, prayerTimes, cityId);
+    if (typeof getPrayerTimes !== 'function' || typeof schedulePrayerNotifications !== 'function') {
+        console.log("[SHOLAT] Fungsi internal tidak ditemukan, penjadwalan dilewati.");
+        return;
+    }
+    console.log("[SHOLAT] Menginisialisasi jadwal sholat dari database...");
+    if (!bot.db?.data?.groups) {
+        console.log("[SHOLAT] Database atau data grup tidak ditemukan, penjadwalan dilewati.");
+        return;
+    }
+    for (const groupId in bot.db.data.groups) {
+        if (bot.db.data.groups[groupId].sholat_city_id) {
+            const cityId = bot.db.data.groups[groupId].sholat_city_id;
+            try {
+                const prayerTimes = await getPrayerTimes(cityId);
+                if (prayerTimes) {
+                    schedulePrayerNotifications(bot, groupId, prayerTimes, cityId);
+                }
+            } catch (e) {
+                console.error(`[SHOLAT] Gagal memuat jadwal untuk grup ${groupId}:`, e.message);
+            }
         }
-      } catch (e) {
-        console.error(`Gagal memuat jadwal untuk grup ${groupId} (ID: ${cityId}):`, e.message);
-      }
     }
-  }
 }
 
-// Impor Baileys tanpa makeInMemoryStore
-const Baileys = require("@whiskeysockets/baileys");
-const {
-  DisconnectReason,
-  fetchLatestBaileysVersion,
-  makeCacheableSignalKeyStore,
-  proto,
-  useMultiFileAuthState,
-} = Baileys;
+// Fungsi utama untuk menjalankan bot
+async function startBot() {
+    console.log('[LOG] Memulai bot...');
 
-const makeWASocket = Baileys.default || Baileys;
+    // Mengelola Autentikasi dan Sesi
+    const { state, saveCreds } = await useMultiFileAuthState("sessions");
+    const { version } = await fetchLatestBaileysVersion();
 
-// Impor Store Kustom kita
-const { createCustomStore } = require('./lib/CustomStore.js');
+    // Menggunakan Store Kustom
+    const store = createCustomStore({ logger: Pino({ level: "silent" }) });
 
-const Pino = require("pino");
-const NodeCache = require("node-cache");
-
-const msgRetryCounterCache = new NodeCache();
-
-var low;
-try {
-  low = require("lowdb");
-} catch {
-  low = require("./lib/lowdb");
-}
-const { Low, JSONFile } = low;
-
-process.on("uncaughtException", console.error);
-
-async function start() {
-  const { state, saveCreds } = await useMultiFileAuthState("sessions");
-  const { version } = await fetchLatestBaileysVersion();
-
-  // Gunakan Store Kustom kita di sini
-  const store = createCustomStore({ logger: Pino({ level: "silent" }) });
-
-  const bot = makeWASocket({
-    version,
-    printQRInTerminal: false,
-    auth: {
-      creds: state.creds,
-      keys: makeCacheableSignalKeyStore(state.keys, Pino({ level: "silent" })),
-    },
-    msgRetryCounterCache: msgRetryCounterCache,
-    getMessage: async (key) => {
-      // Ambil pesan dari store kustom kita
-      if (store) {
-        const msg = await store.loadMessage(key.remoteJid, key.id);
-        return msg?.message || undefined;
-      }
-      return proto.Message.fromObject({});
-    },
-    logger: Pino({ level: "silent" }),
-    syncFullHistory: false
-  });
-
-  // Ikat event ke store kustom kita
-  store.bind(bot.ev);
-  bot.store = store;
-
-  bot.commands = new Collection();
-  loadCommands("commands", bot);
-
-  chokidar.watch("./commands", { persistent: true, ignoreInitial: true })
-    .on("all", () => loadCommands("commands", bot));
-
-  bot.db = new Low(new JSONFile("./database.json"));
-  await bot.db.read();
-  bot.db.data = bot.db.data || { users: {}, groups: {} };
-
-  setInterval(() => {
-    bot.db.write().catch(console.error);
-  }, 30 * 1000);
-
-  bot.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect, qr } = update;
-
-    // Jika ada QR code, tampilkan di terminal
-    if (qr) {
-      console.log('------------------------------------------------');
-      console.log('📱 Pindai QR Code di bawah ini untuk terhubung:');
-
-      // --- METODE 1: Menampilkan QR di Terminal ---
-      // Mungkin berantakan di Termux, tapi kita tetap coba tampilkan
-      qrcode.generate(qr, { small: true });
-
-      // --- METODE 2: Menampilkan Link QR Code ---
-      // Ini adalah cadangan jika gambar QR di atas tidak jelas
-      const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qr)}`;
-      console.log('\n Atau, jika QR di atas berantakan:');
-      console.log('👇 Salin link ini dan buka di browser Anda:');
-      console.log(qrLink);
-      console.log('------------------------------------------------');
-    }
-
-    if (connection === "close") {
-      const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
-      console.log(`Koneksi ditutup karena: ${lastDisconnect.error}, menyambung ulang: ${shouldReconnect}`);
-      if (shouldReconnect) {
-        start();
-      }
-    } else if (connection === "open") {
-      console.log("Koneksi terbuka, memuat jadwal sholat...");
-      // PANGGIL FUNGSI INISIALISASI DI SINI
-      await initializeSchedules(bot);
-    }
-    console.log("connection update", update);
-  });
-
-  bot.ev.on("creds.update", saveCreds);
-  bot.ev.on("messages.upsert", require("./events/CommandHandler").chatUpdate.bind(bot));
-}
-
-function loadCommands(dir, bot) {
-  bot.commands.clear();
-  const commandsPath = path.join(__dirname, dir);
-  fs.readdirSync(commandsPath).forEach(folder => {
-    const folderPath = path.join(commandsPath, folder);
-    fs.readdirSync(folderPath).filter(file => file.endsWith(".js")).forEach(file => {
-      const filePath = path.join(folderPath, file);
-      delete require.cache[require.resolve(filePath)];
-      try {
-        const command = require(filePath);
-        command.category = folder;
-        bot.commands.set(command.name, command);
-        if (command.alias) {
-          command.alias.forEach(alias => bot.commands.set(alias, command));
-        }
-      } catch (error) {
-        console.error(`Gagal memuat perintah dari ${filePath}:`, error);
-      }
+    const bot = makeWASocket({
+        version,
+        auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(state.keys, Pino({ level: "silent" })),
+        },
+        logger: Pino({ level: "silent" }),
+        printQRInTerminal: false, // Penting untuk menangani QR secara manual
+        browser: ['My-WhatsApp-Bot', 'Chrome', '1.0.0'],
+        getMessage: async (key) => store.loadMessage(key.remoteJid, key.id),
     });
-  });
-  console.log(`Perintah berhasil dimuat: ${bot.commands.size} perintah.`);
+
+    // Mengikat store ke event bot
+    store.bind(bot.ev);
+    bot.store = store;
+
+    // Memuat Database
+    bot.db = new Low(new JSONFile("./database.json"));
+    await bot.db.read();
+    bot.db.data = bot.db.data || { users: {}, groups: {} };
+    setInterval(() => {
+        bot.db.write().catch(console.error);
+    }, 30 * 1000);
+
+    // Memuat Perintah
+    bot.commands = new Collection();
+    loadCommands("commands", bot);
+    chokidar.watch("./commands", { persistent: true, ignoreInitial: true })
+        .on("all", () => loadCommands("commands", bot));
+
+    // Menangani Event Koneksi
+    bot.ev.on("connection.update", async (update) => {
+        const { connection, lastDisconnect, qr } = update;
+
+        if (qr) {
+            console.log('------------------------------------------------');
+            console.log('📱 Pindai QR Code di bawah ini untuk terhubung:');
+            qrcode.generate(qr, { small: true });
+            const qrLink = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qr)}`;
+            console.log('\n Atau, jika QR di atas berantakan, buka link ini:\n', qrLink);
+            console.log('------------------------------------------------');
+        }
+
+        if (connection === "close") {
+            const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log(`[CONNECTION] Terputus karena: ${lastDisconnect.error}, menyambung ulang: ${shouldReconnect}`);
+            if (shouldReconnect) {
+                startBot();
+            } else {
+                console.log('[CONNECTION] Terputus permanen. Hapus folder "sessions" dan mulai ulang.');
+            }
+        } else if (connection === "open") {
+            console.log(`✅ Koneksi berhasil tersambung sebagai ${bot.user.name || 'Bot'}`);
+            await initializeSchedules(bot);
+        }
+    });
+
+    // Menangani Event Lainnya
+    bot.ev.on("creds.update", saveCreds);
+    bot.ev.on("messages.upsert", require("./events/CommandHandler").chatUpdate.bind(bot));
 }
 
-start().catch(console.error);
+// Fungsi untuk memuat file perintah
+function loadCommands(dir, bot) {
+    bot.commands.clear();
+    const commandsPath = path.join(__dirname, dir);
+    fs.readdirSync(commandsPath).forEach(folder => {
+        const folderPath = path.join(commandsPath, folder);
+        if (fs.statSync(folderPath).isDirectory()) {
+            fs.readdirSync(folderPath).filter(file => file.endsWith(".js")).forEach(file => {
+                const filePath = path.join(folderPath, file);
+                delete require.cache[require.resolve(filePath)];
+                try {
+                    const command = require(filePath);
+                    command.category = folder;
+                    bot.commands.set(command.name, command);
+                    if (command.alias) {
+                        command.alias.forEach(alias => bot.commands.set(alias, command));
+                    }
+                } catch (error) {
+                    console.error(`Gagal memuat perintah dari ${filePath}:`, error);
+                }
+            });
+        }
+    });
+    console.log(`[COMMANDS] Berhasil dimuat: ${bot.commands.size} perintah.`);
+}
+
+// Menjalankan bot
+startBot().catch(console.error);
+
+// Menangani error yang tidak tertangkap
+process.on("uncaughtException", console.error);
