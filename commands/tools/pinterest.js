@@ -1,8 +1,6 @@
-// commands/tools/pinterest.js (Perbaikan Final Error 403)
 
 const axios = require('axios');
 
-// --- PENTING: Mengambil cookie dari variabel lingkungan (.env) ---
 const PINTEREST_COOKIE = process.env.PINTEREST_COOKIE;
 
 // Fungsi untuk memilih elemen secara acak dari sebuah array
@@ -10,7 +8,7 @@ function pickRandom(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-// Fungsi utama untuk mencari di Pinterest
+// Fungsi utama untuk mencari di Pinterest dengan meniru semua header
 async function pinterestSearch(query) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -18,25 +16,31 @@ async function pinterestSearch(query) {
       if (!PINTEREST_COOKIE) {
         return reject(new Error("Cookie Pinterest tidak ditemukan di file .env Anda."));
       }
-      
-      // --- PERBAIKAN UTAMA: Mengekstrak CSRF Token dari Cookie ---
-      const csrfTokenMatch = PINTEREST_COOKIE.match(/csrftoken=([a-zA-Z0-9]+)/);
-      if (!csrfTokenMatch || !csrfTokenMatch[1]) {
-        return reject(new Error("Gagal menemukan csrftoken di dalam cookie Pinterest Anda."));
-      }
-      const csrfToken = csrfTokenMatch[1];
-      // --- AKHIR PERBAIKAN ---
 
+      const headers = {
+        'accept': 'application/json, text/javascript, */*, q=0.01',
+        'accept-encoding': 'gzip, deflate',
+        'accept-language': 'en-US,en;q=0.9',
+        'cookie': PINTEREST_COOKIE, // Menggunakan cookie dari .env
+        'dnt': '1',
+        'referer': 'https://www.pinterest.com/',
+        'sec-ch-ua': '"Not(A:Brand";v="99", "Microsoft Edge";v="133", "Chromium";v="133"',
+        'sec-ch-ua-full-version-list': '"Not(A:Brand";v="99.0.0.0", "Microsoft Edge";v="133.0.3065.92", "Chromium";v="133.0.6943.142"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-model': '""',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-ch-ua-platform-version': '"10.0.0"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0',
+        'x-app-version': 'c056fb7',
+        'x-pinterest-appstate': 'active',
+        'x-requested-with': 'XMLHttpRequest'
+      };
+      
       const { data } = await axios.get('https://www.pinterest.com/resource/BaseSearchResource/get/', {
-        headers: {
-          'accept': 'application/json, text/javascript, */*, q=0.01',
-          'accept-language': 'en-US,en;q=0.9',
-          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
-          'x-requested-with': 'XMLHttpRequest',
-          // Menambahkan header x-csrftoken yang diekstrak
-          'x-csrftoken': csrfToken, 
-          'cookie': PINTEREST_COOKIE 
-        },
+        headers,
         params: {
           source_url: `/search/pins/?q=${query}`,
           data: JSON.stringify({
@@ -48,6 +52,7 @@ async function pinterestSearch(query) {
       
       const results = data.resource_response?.data?.results;
       if (results && results.length > 0) {
+        // Kita hanya ambil URL gambarnya untuk dikirim
         const imageUrls = results.map(item => item.images?.['736x']?.url).filter(url => url);
         resolve(imageUrls);
       } else {
@@ -60,12 +65,12 @@ async function pinterestSearch(query) {
   });
 }
 
-// Fungsi video akan menggunakan metode yang sama
+// Fungsi video tetap menggunakan metode yang sama
 async function pinterestVideoSearch(query) {
     return pinterestSearch(query);
 }
 
-// Module exports tetap sama
+// Module exports dan logika execute tidak perlu diubah
 module.exports = {
   name: "pin",
   alias: ["pinterest"],
