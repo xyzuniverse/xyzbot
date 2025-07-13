@@ -1,6 +1,8 @@
+// commands/tools/pinterest.js (Perbaikan Final - Meniru Semua Header)
 
 const axios = require('axios');
 
+// --- PENTING: Mengambil cookie dari variabel lingkungan (.env) ---
 const PINTEREST_COOKIE = process.env.PINTEREST_COOKIE;
 
 // Fungsi untuk memilih elemen secara acak dari sebuah array
@@ -17,6 +19,7 @@ async function pinterestSearch(query) {
         return reject(new Error("Cookie Pinterest tidak ditemukan di file .env Anda."));
       }
 
+      // --- PERBAIKAN UTAMA: Menggunakan semua header dari kode yang berhasil ---
       const headers = {
         'accept': 'application/json, text/javascript, */*, q=0.01',
         'accept-encoding': 'gzip, deflate',
