@@ -1,5 +1,8 @@
+// commands/tools/pinterest.js (Perbaikan Final Error 403)
+
 const axios = require('axios');
 
+// --- PENTING: Mengambil cookie dari variabel lingkungan (.env) ---
 const PINTEREST_COOKIE = process.env.PINTEREST_COOKIE;
 
 // Fungsi untuk memilih elemen secara acak dari sebuah array
@@ -7,22 +10,31 @@ function pickRandom(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-// Fungsi utama untuk mencari di Pinterest menggunakan API internal
+// Fungsi utama untuk mencari di Pinterest
 async function pinterestSearch(query) {
   return new Promise(async (resolve, reject) => {
     try {
-      // Mengembalikan error jika cookie tidak ditemukan di file .env
+      // Memeriksa apakah cookie sudah diatur di file .env
       if (!PINTEREST_COOKIE) {
         return reject(new Error("Cookie Pinterest tidak ditemukan di file .env Anda."));
       }
       
+      // --- PERBAIKAN UTAMA: Mengekstrak CSRF Token dari Cookie ---
+      const csrfTokenMatch = PINTEREST_COOKIE.match(/csrftoken=([a-zA-Z0-9]+)/);
+      if (!csrfTokenMatch || !csrfTokenMatch[1]) {
+        return reject(new Error("Gagal menemukan csrftoken di dalam cookie Pinterest Anda."));
+      }
+      const csrfToken = csrfTokenMatch[1];
+      // --- AKHIR PERBAIKAN ---
+
       const { data } = await axios.get('https://www.pinterest.com/resource/BaseSearchResource/get/', {
         headers: {
           'accept': 'application/json, text/javascript, */*, q=0.01',
           'accept-language': 'en-US,en;q=0.9',
           'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
           'x-requested-with': 'XMLHttpRequest',
-          // Menggunakan cookie dari variabel lingkungan
+          // Menambahkan header x-csrftoken yang diekstrak
+          'x-csrftoken': csrfToken, 
           'cookie': PINTEREST_COOKIE 
         },
         params: {
@@ -53,13 +65,13 @@ async function pinterestVideoSearch(query) {
     return pinterestSearch(query);
 }
 
+// Module exports tetap sama
 module.exports = {
   name: "pin",
   alias: ["pinterest"],
   description: "Mencari gambar atau video dari Pinterest.",
   category: "tools",
   execute: async (msg, { bot, args, usedPrefix, command }) => {
-    // Logika execute tetap sama, tidak perlu diubah
     if (!args.length) {
       const helpMessage = `*Pencarian Pinterest* 🔎\n\nFitur ini digunakan untuk mencari media dari Pinterest.\n\n*Cara Penggunaan:*\n\`${usedPrefix + command} <query>\`\nContoh: \`${usedPrefix + command} cyberpunk city\`\n\n*Opsi Tambahan:*\n- \`-j <jumlah>\`: Untuk mengirim beberapa hasil sekaligus (maksimal 5).\n  Contoh: \`${usedPrefix + command} cat -j 3\`\n\n- \`-v\`: Untuk mencoba memprioritaskan pencarian video.\n  Contoh: \`${usedPrefix + command} aesthetic scenery -v\``;
       return bot.sendMessage(msg.from, { text: helpMessage }, { quoted: msg });
