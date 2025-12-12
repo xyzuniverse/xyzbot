@@ -9,8 +9,10 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
+        "allowImportingTsExtensions": true,
         "allowSyntheticDefaultImports": true,
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "noEmit": true
     },
     "include": [
         "./**/*.ts"
