@@ -2,4 +2,4 @@ node_modules
 sessions
 database.json
 client_store.json
-
+dist
