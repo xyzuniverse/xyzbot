@@ -1,0 +1,31 @@
+import type { WASocket } from "baileys";
+
+export default {
+    name: "menu",
+    description: "Show the command list.",
+    execute: async (msg: any, { bot, usedPrefix }: { bot: WASocket & { commands: Map<string, any> }, usedPrefix: string }) => {
+        let categorizedCommands: { [key: string]: any[] } = {};
+        for (const [commandName, commandData] of bot.commands) {
+            const category = commandData.category;
+            if (!categorizedCommands[category]) {
+                categorizedCommands[category] = [];
+            }
+            categorizedCommands[category].push({
+                name: commandName,
+                description: commandData.description,
+            });
+        }
+
+        let menuText = "";
+        menuText += `Hi, ${msg.pushName}👋\nHere's our menu list command bot.\n\n`;
+        for (const category in categorizedCommands) {
+            menuText += `\`${category.toString().charAt(0).toUpperCase() + category.slice(1)
+                }\`\n`;
+            for (const command of categorizedCommands[category]) {
+                menuText += `- \`\`\`${usedPrefix}${command.name}\`\`\`: ${command.description}\n`;
+            }
+            menuText += "\n"; // Add a blank line for next category
+        }
+        return msg.reply(menuText);
+    },
+};
